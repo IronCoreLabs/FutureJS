@@ -1,0 +1,6 @@
+.travis.yml
+karma.conf.js
+tsconfig.json
+tslint.json
+coverage
+yarn.lock
