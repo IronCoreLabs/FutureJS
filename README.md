@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/IronCoreLabs/FutureJS.svg?branch=master)](https://travis-ci.org/IronCoreLabs/FutureJS)
+[![NPM Version](https://badge.fury.io/js/futurejs.svg)](https://www.npmjs.com/package/futurejs)
+
 # FutureJS
 
 A library that expands and improves upon the general concepts supported by Promises. Provides improved control flow of asynchronous operations that are also lazy and not run until asked. 
@@ -12,7 +15,11 @@ Futures provide better granular control over data flow and are also lazy. The Fu
 
 ## Installation
 
-`npm install --save futurejs` or `yarn add futurejs`
+`npm install --save futurejs` 
+
+or
+
+`yarn add futurejs`
 
 ## Types
 

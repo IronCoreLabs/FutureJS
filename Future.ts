@@ -1,4 +1,7 @@
-import {Resolve, Reject, PromiseAction, RejectResolveAction} from './index.d';
+export type Resolve<T> = (result: T) => void;
+export type Reject = (e: Error) => void;
+export type PromiseAction<T> = (reject: Reject, resolve: Resolve<T>) => Promise<T>;
+export type RejectResolveAction<T> = (reject: Reject, resolve: Resolve<T>) => void;
 
 export default class Future<ResultType> {
     action: PromiseAction<ResultType> | RejectResolveAction<ResultType>;

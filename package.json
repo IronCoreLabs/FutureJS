@@ -1,18 +1,17 @@
 {
   "name": "futurejs",
   "version": "1.0.0",
-  "description": "description",
-  "main": "Future.js",
+  "description": "Promise-alternative library for doing asynchronous operations",
   "repository": "https://github.com/IronCoreLabs/futurejs",
   "author": "IronCore Labs",
   "license": "MIT",
   "main": "Future.js",
-  "types": "index.d.ts",
+  "types": "Future.d.ts",
   "scripts": {
     "lint": "tslint --type-check -p \"tsconfig.json\" Future.ts",
     "test": "tsc --noEmit && yarn run lint && yarn run unit",
     "unit": "karma start karma.conf.js",
-    "build": "tsc Future.ts"
+    "build": "tsc -d Future.ts"
   },
   "devDependencies": {
     "@types/jasmine": "^2.6.0",
