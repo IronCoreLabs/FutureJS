@@ -101,7 +101,7 @@ Run another asynchronous operation in sequence based on the prior Futures resolu
 const request = new Future(() => fetch('/some/api/request'));
 
 request.flatMap((fetchResult) => {
-    return new Future(() => fech('/some/other/api/request'));
+    return new Future(() => fetch('/some/other/api/request'));
 });
 ```
 
