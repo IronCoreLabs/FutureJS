@@ -40,7 +40,7 @@ export default class Future<ResultType> {
      * Modify the data within the pipeline synchronously
      * @param {Function} mapper Method which will receive the current data and map it to a new value
      */
-    map<MapType>(mapper: (data: ResultType) => MapType){
+    map<MapType>(mapper: (data: ResultType) => MapType): Future<MapType>{
         return this.flatMap((x: ResultType) => Future.of<MapType>(mapper(x)));
     }
 
@@ -60,10 +60,10 @@ export default class Future<ResultType> {
      * @param {Function} errHandler Error handler which should return a new Future and resolve or reject result
      */
     handleWith<RepairedType extends ResultType>(errHandler: (e: Error) => Future<RepairedType>){
-        return new Future<RepairedType>((reject: Reject, resolve: (Resolve<RepairedType>)) => {
-            this.engage((error: Error) => {
+        return new Future<RepairedType>((reject: Reject, resolve: Resolve<RepairedType>) => {
+            this.engage((error) => {
                 errHandler(error).engage(reject, resolve);
-            }, resolve);
+            }, resolve as Resolve<ResultType>); //Type cast this as the resolved method should be able to handle both ResultType and RepairedType
         });
     }
 
@@ -73,7 +73,7 @@ export default class Future<ResultType> {
      */
     errorMap(mapper: (error: Error) => Error){
         return new Future<ResultType>((reject: Reject, resolve: Resolve<ResultType>) => {
-            this.engage((error: Error) => reject(mapper(error)), resolve);
+            this.engage((error) => reject(mapper(error)), resolve);
         });
     }
 
@@ -168,7 +168,7 @@ export default class Future<ResultType> {
 
             futures.forEach((futureInstance, index) => {
                 futureInstance.engage(
-                    (error: Error) => {
+                    (error) => {
                         if(!done) {
                             done = true;
                             reject(error);
