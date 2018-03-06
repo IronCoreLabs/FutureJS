@@ -13,7 +13,14 @@ module.exports = function(config) {
             showSpecTiming: true
         },
         browserNoActivityTimeout: 20000,
-        browsers: ["ChromeHeadless"],
+        browsers: ["ChromeHeadlessNoSandbox"],
+        //https://docs.travis-ci.com/user/chrome#Sandboxing
+        customLaunchers: {
+            ChromeHeadlessNoSandbox: {
+                base: 'ChromeHeadless',
+                flags: ['--no-sandbox']
+            }
+        },
         singleRun: true,
         karmaTypescriptConfig: {
             compilerOptions: {
