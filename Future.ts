@@ -94,16 +94,17 @@ export default class Future<L, R> {
      * also reject. Otherwise, the Future will resolve with the result of the resolved Promise.
      * @param {Function} fn Function to invoke which returns a Promise
      */
-    static tryP<L extends Error, R>(fn: () => Promise<R>){
+    static tryP<L extends Error, R>(fn: () => Promise<R>|PromiseLike<R>){
         return new Future<L, R>((reject: Reject<L>, resolve: Resolve<R>) => {
-            let promiseResult: Promise<R>;
+            let promiseResult: Promise<R>|PromiseLike<R>;
             try{
                 promiseResult = fn();
             }
             catch(e){
                 return reject(e);
             }
-            promiseResult.then(resolve).catch(reject);
+            //We have to support both Promise and PromiseLike methods as input here, but treat them all as normal Promises when executing them
+            (promiseResult as Promise<R>).then(resolve, reject)
         });
     }
 
