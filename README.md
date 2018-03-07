@@ -210,7 +210,7 @@ fixed.engage(
 
 `reject<L>(error: L): Future<L, never>;`
 
-Creates a Future will will be immediately rejected with the provided Error once computation is kicked off. This function is equivalent to `Promise.reject()` except that it is still lazily evaluated.
+Creates a Future which will be immediately rejected with the provided Error once computation is kicked off. This function is equivalent to `Promise.reject()` except that it is still lazily evaluated.
 
 ```js
 const request = Future.tryP(() => fetch('/some/api/request'));
@@ -221,6 +221,21 @@ request.flatMap((result) => {
     }
     return Future.reject(new Error(result.status));
 });
+```
+
+### encase (static)
+
+`encase<L extends Error, R, A>(fn: (a: A) => R, a: A): Future<L, R>;`
+
+Creates a Future from a function and a value. It will then invoke the function with the value and resolve with the result or reject with any exception thrown by the method. This function is roughly the same as `tryF` but allows you to pass a single argument to the function.
+
+```js
+const parse = Future.encase(JSON.parse, '{"foo":"bar"}');
+
+parse.engage(
+    (e) => console.log(e.message), 
+    console.log //Will log {"foo": "bar"} as an object
+);
 ```
 
 ### gather2 (static)
