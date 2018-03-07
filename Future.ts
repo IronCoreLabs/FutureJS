@@ -104,7 +104,7 @@ export default class Future<L, R> {
                 return reject(e);
             }
             //We have to support both Promise and PromiseLike methods as input here, but treat them all as normal Promises when executing them
-            (promiseResult as Promise<R>).then(resolve, reject)
+            (promiseResult as Promise<R>).then(resolve).catch(reject);
         });
     }
 
