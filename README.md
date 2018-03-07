@@ -174,7 +174,7 @@ Creates a Future which will attempt to execute the provided function and will re
 const parse = Future.tryF()
 ```
 
-### tryP
+### tryP (static)
 
 `tryP<L extends Error, R>(fn: () => Promise<R>): Future<L, R>;`
 
