@@ -14,24 +14,6 @@ describe('Future', () => {
             expect(resolveSpy).not.toHaveBeenCalled();
         });
 
-        it('wraps returned promise in then/catch if returned', () => {
-            const fauxCatch = jasmine.createSpy('fauxCatch');
-            const fauxThen = jasmine.createSpy('fauxThen').and.returnValue({
-                catch: fauxCatch,
-            });
-            const fauxPromise = jasmine.createSpy('fauxPromise').and.returnValue({
-                then: fauxThen,
-            })
-
-            const rejectSpy = jasmine.createSpy('rejectSpy');
-            const resolveSpy = jasmine.createSpy('resolveSpy');
-            new Future(fauxPromise).engage(rejectSpy, resolveSpy);
-
-            expect(fauxPromise).toHaveBeenCalledWith(rejectSpy, resolveSpy);
-            expect(fauxThen).toHaveBeenCalledWith(resolveSpy);
-            expect(fauxCatch).toHaveBeenCalledWith(rejectSpy);
-        });
-
         it('invokes reject when action throws exception', () => {
             const actionSpy = jasmine.createSpy('futureAction').and.throwError('forced error');
             const rejectSpy = jasmine.createSpy('rejectSpy');
@@ -94,7 +76,7 @@ describe('Future', () => {
                 resolve('my value');
             }
 
-            new Future<string>(action)
+            new Future<Error, string>(action)
                 .map((val) => {
                     expect(val).toEqual('my value');
                     return 'changed value';
@@ -133,7 +115,7 @@ describe('Future', () => {
                 resolve('my value');
             }
 
-            new Future<string>(action)
+            new Future<Error, string>(action)
                 .flatMap((val) => {
                     expect(val).toEqual('my value');
                     return new Future((_reject: (e: Error) => void, resolve: (val: string) => void) => {
@@ -238,7 +220,7 @@ describe('Future', () => {
                 reject(new Error('error value'));
             }
 
-            new Future<string>(action)
+            new Future<Error, string>(action)
                 .errorMap((err) => {
                     expect(err).toEqual(new Error('error value'));
                     return new Error('mapped error');
@@ -257,7 +239,7 @@ describe('Future', () => {
                 resolve('my value');
             }
 
-            new Future<string>(action)
+            new Future<Error, string>(action)
                 .errorMap((err) => {
                     expect(err).toEqual(new Error('error value'));
                     return new Error('mapped error')
@@ -268,6 +250,67 @@ describe('Future', () => {
                         expect(val).toEqual('my value');
                         done();
                     }
+                );
+        });
+    });
+
+    describe('tryF', () => {
+        it('resolves with the return value of the provided function', () => {
+            const fnToValue = jasmine.createSpy('fnToValue').and.returnValue('test');
+
+            Future.tryF(fnToValue)
+                .engage(
+                    (e) => fail(e.message),
+                    (result) => {
+                        expect(result).toEqual('test');
+                        expect(fnToValue).toHaveBeenCalledWith();
+                    }
+                );
+        });
+
+        it('rejects if the provided function throws an exception', () => {
+            const fnToException = jasmine.createSpy('fnToPromise').and.throwError('forced failure');
+
+            Future.tryF(fnToException)
+                .engage(
+                    (error) => {
+                        expect(error.message).toEqual('forced failure');
+                        expect(fnToException).toHaveBeenCalledWith();
+                    },
+                    () => fail('should reject when function throws an exception')
+                );
+        });
+    });
+
+    describe('tryP', () => {
+        it('wraps returned promise in then/catch if returned', () => {
+            const fauxCatch = jasmine.createSpy('fauxCatch');
+            const fauxThen = jasmine.createSpy('fauxThen').and.returnValue({
+                catch: fauxCatch,
+            });
+            const fauxPromise = jasmine.createSpy('fauxPromise').and.returnValue({
+                then: fauxThen,
+            })
+
+            const rejectSpy = jasmine.createSpy('rejectSpy');
+            const resolveSpy = jasmine.createSpy('resolveSpy');
+            Future.tryP(fauxPromise).engage(rejectSpy, resolveSpy);
+
+            expect(fauxPromise).toHaveBeenCalledWith();
+            expect(fauxThen).toHaveBeenCalledWith(resolveSpy);
+            expect(fauxCatch).toHaveBeenCalledWith(rejectSpy);
+        });
+
+        it('rejects if function that creates the promise throws an exception', () => {
+            const fnToPromise = jasmine.createSpy('fnToPromise').and.throwError('forced failure');
+
+            Future.tryP(fnToPromise)
+                .engage(
+                    (error) => {
+                        expect(error.message).toEqual('forced failure');
+                        expect(fnToPromise).toHaveBeenCalledWith();
+                    },
+                    () => fail('should reject when function throws an exception')
                 );
         });
     });
@@ -295,6 +338,35 @@ describe('Future', () => {
 
                     },
                     () => fail('resolve handler should never be called when using Future.reject')
+                );
+        });
+    });
+
+    describe('encase', () => {
+        it('resolves with value of calling method', () => {
+            const fn = jasmine.createSpy('fn').and.returnValue('test');
+            const val = 'provided value';
+
+            Future.encase(fn, val)
+                .engage(
+                    (e) => fail(e),
+                    (value) => {
+                        expect(value).toEqual('test');
+                        expect(fn).toHaveBeenCalledWith('provided value');
+                    }
+                );
+        });
+
+        it('rejects if function throws an exception', () => {
+            const fn = jasmine.createSpy('fn').and.throwError('forced failure')
+            const val = 'provided value';
+
+            Future.encase(fn, val)
+                .engage(
+                    (e) => {
+                        expect(e.message).toEqual('forced failure');
+                    },
+                    () => fail('Should not resolve when method fails')
                 );
         });
     });

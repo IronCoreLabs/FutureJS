@@ -29,9 +29,9 @@ This library is written in TypeScript and published to NPM as JavaScript. TypeSc
 
 ### Constructor
 
-`new Future<ResultType>((reject: (e: Error) => void, resolve: resolve: (result: ResultType) => void) => void)`
+`new Future<L, R>((reject: (e: L) => void, resolve: (result: R) => void) => void)`
 
-Futures are constructed by providing a function which will be invoked with two callbacks, `reject` and `resolve`. The function you provide to the constructor will not be run until you run the Future (explained later). Within this function you'll perform your async operation and invoke the `resolve` action with your data success or the `reject` action with an `Error` on failure.
+Futures are constructed by providing a function which will be invoked with two callbacks, `reject` and `resolve`. The function you provide to the constructor will not be run until you run the Future (explained later). Within this function you'll perform your async operation and invoke the `resolve` action with your successful result or the `reject` action with an `Error` (or similar) on failure.
 
 ```js
 //Successful action
@@ -49,26 +49,18 @@ new Future((reject, resolve) => {
 });
 ```
 
-### Promise Constructor
-
-`new Future<ResultType>((reject: (e: Error) => void, resolve: (result: ResultType) => void) => Promise<ResultType>)`
-
-Futures can also be constructed from functions that return Promises. In this case, the `reject` and `resolve` functions will automatically be provided as the callbacks to the Promise `.then` and `.reject` methods. This provides a great way to integrate into APIs which speak Promises. For example, wrapping async requests using the [fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) can be implemented like so:
-
-```js
-new Future(() => {
-    return fetch('/some/api/request');
-});
-```
-
 ### engage
 
-`engage(reject: (e: Error) => void, resolve: (result: ResultType) => void): void`
+`engage(reject: (e: L) => void, resolve: (result: R) => void): void`
 
-As mentioned earlier, Futures are lazy and won't evaluate your constructor action until you ask. This can be done via the `engage` function. Calling this function will start your Future chain. The `engage` method takes two function arguments which are the functions to execute on success or failure of the Future computation.
+As mentioned earlier, Futures are lazy and won't evaluate your constructor action until you ask. This evaluation can be done via the `engage` function. Calling this function will start your Future chain. The `engage` method takes two function arguments which are the functions to execute on success or failure of the Future computation.
 
 ```js
-const request = new Future(() => fetch('/some/api/request'));
+const request = new Future((reject, resolve) => {
+    setTimeout(() => {
+        resolve('It worked!');
+    }, 1000);
+});
 
 request.engage(
     (error) => {/*handle Error scenario*/},
@@ -78,27 +70,35 @@ request.engage(
 
 ### toPromise
 
-`toPromise(): Promise<ResultType>`
+`toPromise(): Promise<R>`
 
 You can also convert your Future chain back into a Promise using the `toPromise` method. This function can be used as an alternative to the `engage` method as it will also kick off computation of your Future. 
 
 ```js
-const request = new Future(() => fetch('/some/api/request'));
+const request = new Future((reject, resolve) => {
+    setTimeout(() => {
+        resolve('It worked!');
+    }, 1000);
+});
 
 request
     .toPromise()
     .then(() => ...)
-    .reject(() => ...)
+    .catch(() => ...)
 ```
 
 ### flatMap
 
-`flatMap<T>(next: (data: ResultType) => Future<T>): Future<T>`
+`flatMap<T>(next: (data: R) => Future<L, T>): Future<L, T>`
 
 Run another asynchronous operation in sequence based on the prior Futures resolution value. This second operation will only be run if the first operation succeeded. This operation works similar to how you can chain Promises by returning a new Promise in the `then` callback.
 
 ```js
-const request = new Future(() => fetch('/some/api/request'));
+const request = new Future((reject, resolve) => {
+    setTimeout(() => {
+        resolve('It worked!');
+    }, 1000);
+});
 
 request.flatMap((fetchResult) => {
     return new Future(() => fetch('/some/other/api/request'));
@@ -107,12 +107,16 @@ request.flatMap((fetchResult) => {
 
 ### map 
 
-`map<T>(mapper: (data: ResultType) => T): Future<T>`
+`map<T>(mapper: (data: ResultType) => T): Future<L, T>`
 
 Run a synchronous operation that maps the prior Futures resolution value to a different value. This function is also useful if you need to decision off a prior resolution value to resolve or reject the Future.
 
 ```js
-const request = new Future(() => fetch('/some/api/request'));
+const request = new Future((reject, resolve) => {
+    setTimeout(() => {
+        resolve('It worked!');
+    }, 1000);
+});
 
 request.map((fetchResult) => {
     //Convert the resolution of this Future from the fetch() Response type to a boolean based on the status field
@@ -122,12 +126,16 @@ request.map((fetchResult) => {
 
 ### errorMap
 
-`errorMap(mapper: (error: Error) => Error): Future<ResultType>`
+`errorMap<LB>(mapper: (error: Error) => LB): Future<LB, R>`
 
 Map but for the reject case. Allows you to modify Error objects that might occur during the chain.
 
 ```js
-const request = new Future(() => fetch('/some/api/request'));
+const request = new Future((reject, resolve) => {
+    setTimeout(() => {
+        resolve('It worked!');
+    }, 1000);
+});
 
 request.errorMap((error) => {
     if(error.message.contains('no network')){
@@ -139,12 +147,16 @@ request.errorMap((error) => {
 
 ### handleWith
 
-`handleWith<RepairedType extends ResultType>(errHandler: (e: Error) => Future<RepairedType>): Future<RepairedType>;`
+`handleWith<RepairedType extends ResultType>(errHandler: (e: Error) => Future<L, RepairedType>): Future<L, RepairedType>;`
 
 Recover from an error in your Future chain and return a repaired result that can be passed to the rest of your chain. This allows you to possibly recover from an error if there are scenarios where error conditions shouldn't be propagated out from your computation. This method will not be invoked if the prior chain does not error, but it will be invoked if any of the prior chains failed, so placement of the `handleWith` call is important to avoid catch all situations. 
 
 ```js
-const request = new Future(() => fetch('/some/api/request'));
+const request = new Future((reject, resolve) => {
+    setTimeout(() => {
+        reject(new Error('forced failure'));
+    }, 1000);
+});
 
 request.handleWith((fetchError) => {
     //Convert the error case from the failed fetch() into something that can be handled in the rest of the chain
@@ -152,36 +164,78 @@ request.handleWith((fetchError) => {
 });
 ```
 
+### tryF (static)
+
+`Future.tryF<L extends Error, R>(fn: () => R): Future<L, R>;`
+
+Creates a Future which will attempt to execute the provided function and will resolve with it's returned value. If the function throws an exception then the Future will be rejected with the throw exception.
+
+```js
+const parse = Future.tryF()
+```
+
+### tryP
+
+`tryP<L extends Error, R>(fn: () => Promise<R>): Future<L, R>;`
+
+Creates a Future which will execute the provided function which should return a Promise. The `.then` and `.catch` methods for the Promise will resolve the Future.
+
+```js
+const request = Future.tryP(() => fetch('/some/api/endpoint'));
+
+request.engage(
+    () => console.log('Request to API failed'),
+    (response) => {
+        console.log(response.statusCode);
+    }
+)
+```
+
 ### of (static)
 
-`Future.of<ResultType>(result: ResultType): Future<ResultType>;`
+`Future.of<R>(result: R): Future<never, R>;`
 
 Creates a Future which will be immediately resolved with the provided value once computation is kicked off. This function is equivalent to `Promise.resolve()` except that it is still lazily evaluated.
 
 ```js
-const fixed = new Future(() => fetch('/some/api/request'));
+const fixed = Future.of({foo: 'bar'});
 
-fixed.flatMap((result) => {
-    return result.resolved;
-});
+fixed.engage(
+    () => console.log('will never happen'),
+    console.log //Will log {"foo": "bar"}
+)
 ```
-
 
 ### reject (static)
 
-`reject<PhantomType>(error: Error): Future<PhantomType>;`
+`reject<L>(error: L): Future<L, never>;`
 
-Creates a Future will will be immediately rejected with the provided Error once computation is kicked off. This function is equivalent to `Promise.reject()` except that it is still lazily evaluated.
+Creates a Future which will be immediately rejected with the provided Error once computation is kicked off. This function is equivalent to `Promise.reject()` except that it is still lazily evaluated.
 
 ```js
-const fixed = new Future(() => fetch('/some/api/request'));
+const request = Future.tryP(() => fetch('/some/api/request'));
 
-fixed.flatMap((result) => {
-    if(result.status ===  '200'){
+request.flatMap((result) => {
+    if(result.statusCode ===  200){
         return Future.of(true);
     }
     return Future.reject(new Error(result.status));
 });
+```
+
+### encase (static)
+
+`encase<L extends Error, R, A>(fn: (a: A) => R, a: A): Future<L, R>;`
+
+Creates a Future from a function and a value. It will then invoke the function with the value and resolve with the result or reject with any exception thrown by the method. This function is roughly the same as `tryF` but allows you to pass a single argument to the function.
+
+```js
+const parse = Future.encase(JSON.parse, '{"foo":"bar"}');
+
+parse.engage(
+    (e) => console.log(e.message), 
+    console.log //Will log {"foo": "bar"} as an object
+);
 ```
 
 ### gather2 (static)
@@ -192,8 +246,8 @@ Runs two Futures together in parallel which resolve in different result types. I
 
 ```js
 const requests = Future.all(
-    new Future(() => fetch('/api/request/one')),
-    new Future(() => fetch('/api/request/two'));
+    Future.tryP(() => fetch('/api/request/one')),
+    Future.tryP(() => fetch('/api/request/two'));
 );
 
 requests.engage(
