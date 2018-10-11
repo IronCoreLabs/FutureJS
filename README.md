@@ -168,10 +168,10 @@ request.handleWith((fetchError) => {
 
 `Future.tryF<L extends Error, R>(fn: () => R): Future<L, R>;`
 
-Creates a Future which will attempt to execute the provided function and will resolve with it's returned value. If the function throws an exception then the Future will be rejected with the throw exception.
+Creates a Future which will attempt to execute the provided function and will resolve with it's returned value. If the function throws an exception then the Future will be rejected with the thrown exception.
 
 ```js
-const parse = Future.tryF()
+const parse = Future.tryF(() => JSON.parse(value))
 ```
 
 ### tryP (static)
