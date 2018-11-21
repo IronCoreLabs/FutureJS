@@ -251,29 +251,19 @@ export default class Future<L, R> {
      * as the provided map.
      */
     private static allObject<L, R>(futures: {[key: string]: Future<L, R>}) {
-        return new Future((reject: Reject<L>, resolve: Resolve<{[key: string]: R}>) => {
-            const results: {[key: string]: R} = {};
-            const futureKeys = Object.keys(futures);
-            let done = false;
-            let count = 0;
-
-            futureKeys.forEach((objectKey) => {
-                futures[objectKey].engage(
-                    (error) => {
-                        if (!done) {
-                            done = true;
-                            reject(error);
-                        }
-                    },
-                    (result) => {
-                        results[objectKey] = result;
-                        count += 1;
-                        if (count === futureKeys.length) {
-                            resolve(results);
-                        }
-                    }
-                );
-            });
+        const futureKeys = Object.keys(futures);
+        //Convert the Future map into an array in the same order as we get back from Object.keys
+        const futuresArray = futureKeys.map((key) => futures[key]);
+        return this.allArray(futuresArray).map((futureResults) => {
+            //Now iterate over the original keys and build a new map from key to Future result
+            return futureKeys.reduce(
+                (futureMap, futureKey, index) => {
+                    //The index of the object keys will be the same index as the expected result
+                    futureMap[futureKey] = futureResults[index];
+                    return futureMap;
+                },
+                {} as {[key: string]: R}
+            );
         });
     }
 }
