@@ -13,12 +13,11 @@ export default class Future<L, R> {
      * @param {Function} reject  Handler if error occured during Future execution
      * @param {Function} resolve Handler if Future fully executed successfully
      */
-    engage(reject: Reject<L>, resolve: Resolve<R>){
-        try{
+    engage(reject: Reject<L>, resolve: Resolve<R>) {
+        try {
             //In the case where the action call just completely blows up, prevent against that and invoke reject.
             this.action(reject, resolve);
-        }
-        catch(error){
+        } catch (error) {
             reject(error);
         }
     }
@@ -27,7 +26,7 @@ export default class Future<L, R> {
      * Similar to engage. Starts execution of the Future and returns the resolve/reject wrapped up in a Promise instead of taking reject/resolve parameters
      * @return {Promise<R>} Start execution of the Future but return a Promise which will be resolved/reject when the Future is
      */
-    toPromise(): Promise<R>{
+    toPromise(): Promise<R> {
         return new Promise<R>((resolve: Resolve<R>, reject: Reject<L>) => this.engage(reject, resolve));
     }
 
@@ -35,7 +34,7 @@ export default class Future<L, R> {
      * Modify the data within the pipeline synchronously
      * @param {Function} mapper Method which will receive the current data and map it to a new value
      */
-    map<MapType>(mapper: (data: R) => MapType): Future<L, MapType>{
+    map<MapType>(mapper: (data: R) => MapType): Future<L, MapType> {
         return this.flatMap((x: R) => Future.of<MapType>(mapper(x)));
     }
 
@@ -43,7 +42,7 @@ export default class Future<L, R> {
      * Run another asynchronous operation recieving the data from the previous operation
      * @param {Function} next Method to execute to run the operation
      */
-    flatMap<NewResultType>(next: (data: R) => Future<L, NewResultType>){
+    flatMap<NewResultType>(next: (data: R) => Future<L, NewResultType>) {
         return new Future<L, NewResultType>((reject: Reject<L>, resolve: Resolve<NewResultType>) => {
             this.engage(reject, (data: R) => next(data).engage(reject, resolve));
         });
@@ -54,11 +53,14 @@ export default class Future<L, R> {
      * the original R as to make sure follow-on Futures can handle the data further in the chain
      * @param {Function} errHandler Error handler which should return a new Future and resolve or reject result
      */
-    handleWith<RepairedType extends R>(errHandler: (e: L) => Future<L, RepairedType>){
+    handleWith<RepairedType extends R>(errHandler: (e: L) => Future<L, RepairedType>) {
         return new Future<L, RepairedType>((reject: Reject<L>, resolve: Resolve<RepairedType>) => {
-            this.engage((error) => {
-                errHandler(error).engage(reject, resolve);
-            }, resolve as Resolve<R>); //Type cast this as the resolved method should be able to handle both R and RepairedType
+            this.engage(
+                (error) => {
+                    errHandler(error).engage(reject, resolve);
+                },
+                resolve as Resolve<R>
+            ); //Type cast this as the resolved method should be able to handle both R and RepairedType
         });
     }
 
@@ -66,7 +68,7 @@ export default class Future<L, R> {
      * Map errors to a new error type.
      * @param {Function} mapper Mapping function which will recieve the current error can map it to a new type
      */
-    errorMap<LB>(mapper: (error: L) => LB){
+    errorMap<LB>(mapper: (error: L) => LB) {
         return new Future<LB, R>((reject: Reject<LB>, resolve: Resolve<R>) => {
             this.engage((error) => reject(mapper(error)), resolve);
         });
@@ -76,13 +78,12 @@ export default class Future<L, R> {
      * Wrap the provided function in a Future which will either resolve with it's return value or reject with any exception it throws.
      * @param {Function} fn Function to invoke when Future is engaged
      */
-    static tryF<L extends Error, R>(fn: () => R){
+    static tryF<L extends Error, R>(fn: () => R) {
         return new Future<L, R>((reject: Reject<L>, resolve: Resolve<R>) => {
             let result: R;
-            try{
+            try {
                 result = fn();
-            }
-            catch(e){
+            } catch (e) {
                 return reject(e);
             }
             resolve(result);
@@ -94,13 +95,12 @@ export default class Future<L, R> {
      * also reject. Otherwise, the Future will resolve with the result of the resolved Promise.
      * @param {Function} fn Function to invoke which returns a Promise
      */
-    static tryP<L extends Error, R>(fn: () => Promise<R>|PromiseLike<R>){
+    static tryP<L extends Error, R>(fn: () => Promise<R> | PromiseLike<R>) {
         return new Future<L, R>((reject: Reject<L>, resolve: Resolve<R>) => {
-            let promiseResult: Promise<R>|PromiseLike<R>;
-            try{
+            let promiseResult: Promise<R> | PromiseLike<R>;
+            try {
                 promiseResult = fn();
-            }
-            catch(e){
+            } catch (e) {
                 return reject(e);
             }
             //We have to support both Promise and PromiseLike methods as input here, but treat them all as normal Promises when executing them
@@ -111,7 +111,7 @@ export default class Future<L, R> {
     /**
      * Create a new synchronous Future which will automatically resolve with the provided value
      */
-    static of<R>(result: R){
+    static of<R>(result: R) {
         return new Future<never, R>((_, resolve: Resolve<R>) => {
             resolve(result);
         });
@@ -120,7 +120,7 @@ export default class Future<L, R> {
     /**
      * Create a new synchronous Future which will automatically reject with the provided value
      */
-    static reject<L>(error: L){
+    static reject<L>(error: L) {
         return new Future<L, never>((reject: Reject<L>) => {
             reject(error);
         });
@@ -132,13 +132,12 @@ export default class Future<L, R> {
      * @param {Function} fn The function to execute
      * @param {A}        a  The value to pass to the function
      */
-    static encase<L extends Error, R, A>(fn: (a: A) => R, a: A){
+    static encase<L extends Error, R, A>(fn: (a: A) => R, a: A) {
         return new Future<L, R>((reject: Reject<L>, resolve: Resolve<R>) => {
             let result: R;
-            try{
+            try {
                 result = fn(a);
-            }
-            catch(e){
+            } catch (e) {
                 return reject(e);
             }
             resolve(result);
@@ -150,7 +149,7 @@ export default class Future<L, R> {
      * of the futures resolve and the results will be in an array properly indexed to how they were passed in. If any of the Futures
      * reject, then no results are returned and the Future is rejected.
      */
-    static gather2<L, R1, R2>(future1: Future<L, R1>, future2: Future<L, R2>){
+    static gather2<L, R1, R2>(future1: Future<L, R1>, future2: Future<L, R2>) {
         return new Future((reject: Reject<L>, resolve: Resolve<[R1, R2]>) => {
             const results: [R1, R2] = [] as any;
             let count = 0;
@@ -158,14 +157,14 @@ export default class Future<L, R> {
 
             future1.engage(
                 (error) => {
-                    if(!done) {
+                    if (!done) {
                         done = true;
                         reject(error);
                     }
                 },
                 (result) => {
                     results[0] = result;
-                    if(++count === 2) {
+                    if (++count === 2) {
                         resolve(results);
                     }
                 }
@@ -173,14 +172,14 @@ export default class Future<L, R> {
 
             future2.engage(
                 (error) => {
-                    if(!done) {
+                    if (!done) {
                         done = true;
                         reject(error);
                     }
                 },
                 (result) => {
                     results[1] = result;
-                    if(++count === 2) {
+                    if (++count === 2) {
                         resolve(results);
                     }
                 }
@@ -191,7 +190,7 @@ export default class Future<L, R> {
     /**
      * Same as gather2 except supports running three concurrent Futures
      */
-    static gather3<L, R1, R2, R3>(future1: Future<L, R1>, future2: Future<L, R2>, future3: Future<L, R3>){
+    static gather3<L, R1, R2, R3>(future1: Future<L, R1>, future2: Future<L, R2>, future3: Future<L, R3>) {
         const firstTwo = this.gather2(future1, future2);
         return this.gather2(firstTwo, future3).map<[R1, R2, R3]>(([[f1, f2], f3]) => [f1, f2, f3]);
     }
@@ -199,18 +198,29 @@ export default class Future<L, R> {
     /**
      * Same as gather2 except supports running four concurrent Futures
      */
-    static gather4<L, R1, R2, R3, R4>(future1: Future<L, R1>, future2: Future<L, R2>, future3: Future<L, R3>, future4: Future<L, R4>){
+    static gather4<L, R1, R2, R3, R4>(future1: Future<L, R1>, future2: Future<L, R2>, future3: Future<L, R3>, future4: Future<L, R4>) {
         const firstTwo = this.gather2(future1, future2);
         const secondTwo = this.gather2(future3, future4);
         return this.gather2(firstTwo, secondTwo).map<[R1, R2, R3, R4]>(([[f1, f2], [f3, f4]]) => [f1, f2, f3, f4]);
     }
 
     /**
-     * Returns a new Future which will run all of the provided futures in parallel. The returned Future will be resolved if all
-     * of the futures resolve and the results will be in an array properly indexed to how they were passed in. If any of the Futures
-     * reject, then no results are returned
+     * Returns a new Future which will run all of the provided futures in parallel. The returned Future will be resolved if all of the Futures
+     * resolve. If an array of Futures is provided the results will be in an array properly indexed to how they were provided. If an object of
+     * Futures is provided the results will be an object with the same keys as the objected provided. If any of the Futures reject, then no results
+     * are returned.
      */
-    static all<L, R>(futures: Array<Future<L, R>>){
+    static all<L, R>(futures: Array<Future<L, R>>): Future<L, R[]>;
+    static all<L, R>(futures: {[key: string]: Future<L, R>}): Future<L, {[key: string]: R}>;
+    static all<L, R>(futures: Array<Future<L, R>> | {[key: string]: Future<L, R>}) {
+        return Array.isArray(futures) ? this.allArray(futures) : this.allObject(futures);
+    }
+
+    /**
+     * Run all of the Futures in the provided array in parallel and resolve with an array where the results are in the same index
+     * as the provided array.
+     */
+    private static allArray<L, R>(futures: Array<Future<L, R>>) {
         return new Future((reject: Reject<L>, resolve: Resolve<R[]>) => {
             const results: R[] = [];
             let count = 0;
@@ -219,7 +229,7 @@ export default class Future<L, R> {
             futures.forEach((futureInstance, index) => {
                 futureInstance.engage(
                     (error) => {
-                        if(!done) {
+                        if (!done) {
                             done = true;
                             reject(error);
                         }
@@ -227,7 +237,38 @@ export default class Future<L, R> {
                     (result) => {
                         results[index] = result;
                         count += 1;
-                        if(count === futures.length) {
+                        if (count === futures.length) {
+                            resolve(results);
+                        }
+                    }
+                );
+            });
+        });
+    }
+
+    /**
+     * Run all of the Futures in the provided Future map in parallel and resolve with an object where the results are in the same key
+     * as the provided map.
+     */
+    private static allObject<L, R>(futures: {[key: string]: Future<L, R>}) {
+        return new Future((reject: Reject<L>, resolve: Resolve<{[key: string]: R}>) => {
+            const results: {[key: string]: R} = {};
+            const futureKeys = Object.keys(futures);
+            let done = false;
+            let count = 0;
+
+            futureKeys.forEach((objectKey) => {
+                futures[objectKey].engage(
+                    (error) => {
+                        if (!done) {
+                            done = true;
+                            reject(error);
+                        }
+                    },
+                    (result) => {
+                        results[objectKey] = result;
+                        count += 1;
+                        if (count === futureKeys.length) {
                             resolve(results);
                         }
                     }

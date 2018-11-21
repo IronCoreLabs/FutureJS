@@ -3,11 +3,11 @@
 
 # FutureJS
 
-A library that expands and improves upon the general concepts supported by Promises. Provides improved control flow of asynchronous operations that are also lazy and not run until asked. 
+A library that expands and improves upon the general concepts supported by Promises. Provides improved control flow of asynchronous operations that are also lazy and not run until asked.
 
 ## Reasoning
 
-Promises in JavaScript are great start, but they're somewhat limited in the ways you can use them to control the flow of asynchronous operations. Async operations can be easily chained within Promises, but chaining async and synchronous operations together is a bit confusing and requires more code than should be necessary. 
+Promises in JavaScript are great start, but they're somewhat limited in the ways you can use them to control the flow of asynchronous operations. Async operations can be easily chained within Promises, but chaining async and synchronous operations together is a bit confusing and requires more code than should be necessary.
 
 In addition, Promises are eager, meaning that it will kick off your action as soon as your Promise constructor is invoked. This means you cannot pass around Promises without running them.
 
@@ -15,7 +15,7 @@ Futures provide better granular control over data flow and are also lazy. The Fu
 
 ## Installation
 
-`npm install --save futurejs` 
+`npm install --save futurejs`
 
 or
 
@@ -72,7 +72,7 @@ request.engage(
 
 `toPromise(): Promise<R>`
 
-You can also convert your Future chain back into a Promise using the `toPromise` method. This function can be used as an alternative to the `engage` method as it will also kick off computation of your Future. 
+You can also convert your Future chain back into a Promise using the `toPromise` method. This function can be used as an alternative to the `engage` method as it will also kick off computation of your Future.
 
 ```js
 const request = new Future((reject, resolve) => {
@@ -105,7 +105,7 @@ request.flatMap((fetchResult) => {
 });
 ```
 
-### map 
+### map
 
 `map<T>(mapper: (data: ResultType) => T): Future<L, T>`
 
@@ -149,7 +149,7 @@ request.errorMap((error) => {
 
 `handleWith<RepairedType extends ResultType>(errHandler: (e: Error) => Future<L, RepairedType>): Future<L, RepairedType>;`
 
-Recover from an error in your Future chain and return a repaired result that can be passed to the rest of your chain. This allows you to possibly recover from an error if there are scenarios where error conditions shouldn't be propagated out from your computation. This method will not be invoked if the prior chain does not error, but it will be invoked if any of the prior chains failed, so placement of the `handleWith` call is important to avoid catch all situations. 
+Recover from an error in your Future chain and return a repaired result that can be passed to the rest of your chain. This allows you to possibly recover from an error if there are scenarios where error conditions shouldn't be propagated out from your computation. This method will not be invoked if the prior chain does not error, but it will be invoked if any of the prior chains failed, so placement of the `handleWith` call is important to avoid catch all situations.
 
 ```js
 const request = new Future((reject, resolve) => {
@@ -233,19 +233,19 @@ Creates a Future from a function and a value. It will then invoke the function w
 const parse = Future.encase(JSON.parse, '{"foo":"bar"}');
 
 parse.engage(
-    (e) => console.log(e.message), 
+    (e) => console.log(e.message),
     console.log //Will log {"foo": "bar"} as an object
 );
 ```
 
 ### gather2 (static)
 
-`gather2<T1, T2>(future1: Future<T1>, future2: Future<T2>): Future<[T1, T2]>;`
+`gather2<L, R1, R2>(future1: Future<L, R1>, future2: Future<L, R2>): Future<L, [T1, T2]>;`
 
 Runs two Futures together in parallel which resolve in different result types. If either of the futures reject then the Future that this returns will reject as well. The resulting arrays values will be fixed by the parameter index. That is, the resolved value from the first Future will be in the 0 index of the array while the resolved value from the second Future will be in the 1 index of the array.
 
 ```js
-const requests = Future.all(
+const requests = Future.gather2(
     Future.tryP(() => fetch('/api/request/one')),
     Future.tryP(() => fetch('/api/request/two'));
 );
@@ -256,25 +256,48 @@ requests.engage(
 )
 ```
 
-
 ### gather3 (static)
 
-`gather3<T1, T2, T3>(future1: Future<T1>, future2: Future<T2>, future3: Future<T3>): Future<[T1, T2, T3]>`
+`gather3<L, R1, R2, R3>(future1: Future<L, R1>, future2: Future<L, R2>, future3: Future<L, R3>): Future<L, [R1, R2, R3]>`
 
 Same as above, but runs three Futures together in parallel which resolve in different result types.
 
 ### gather4 (static)
 
-`gather4<T1, T2, T3, T4>(future1: Future<T1>, future2: Future<T2>, future3: Future<T3>, future4: Future<T4>): Future<[T1, T2, T3, T4]>`
+`gather4<L, R1, R2, R3, R4>(future1: Future<L, R1>, future2: Future<L, R2>, future3: Future<L, R3>, future4: Future<L, R4>): Future<L, [R1, R2, R3, R4]>`
 
 Same as above, but runs four Futures together in parallel which resolve in different result types.
 
 ### all (static)
 
-`all<T>(futures: Array<Future<T>>): Future<T[]>`
+`all<L, R>(futures: Array<Future<R>>): Future<L, R[]>`
+`all<L, R>(futures: {[key: string]: Future<L, R>}: Future<L, {[key: string]: R}>`
 
-Same as above but runs an arbitrary number of Futures in parallel, all of which result in the same result type.
+Same as above but runs an arbitrary number of Futures in parallel, all of which result in the same result type. Supports both arbitrary length arrays and objects of any size. If an array is provided the result will be an array with the indices preserved. If an object is provided the result will be an object with the keys preserved.
 
+```js
+//As array
+const requests = Future.all([
+    Future.tryP(() => fetch('/api/request/one')),
+    Future.tryP(() => fetch('/api/request/two')),
+]);
+
+requests.engage(
+    (error) => /*error from the first Future that rejected*/,
+    (result) => /*result[0] is success from request/one and result[1] is success from request/two*/
+);
+
+//As object
+const requests = Future.all({
+    requestOne: Future.tryP(() => fetch('/api/request/one')),
+    requestTwo: Future.tryP(() => fetch('/api/request/two')),
+});
+
+requests.engage(
+    (error) => /*error from the first Future that rejected*/,
+    (result) => /*result.requestOne is success from request/one and result.requestTwo is success from request/two*/
+);
+```
 
 ## License
 
