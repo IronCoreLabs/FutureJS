@@ -1,29 +1,37 @@
 {
-  "name": "futurejs",
-  "version": "2.0.0",
-  "description": "Promise-alternative library for doing asynchronous operations",
-  "repository": "https://github.com/IronCoreLabs/futurejs",
-  "author": "IronCore Labs",
-  "license": "MIT",
-  "main": "Future.js",
-  "types": "index.d.ts",
-  "scripts": {
-    "lint": "tslint -p \"tsconfig.json\" Future.ts",
-    "test": "tsc --noEmit && yarn run lint && yarn run unit",
-    "unit": "karma start karma.conf.js",
-    "build": "tsc -d --lib es5,es2015.promise Future.ts && mv Future.d.ts index.d.ts"
-  },
-  "devDependencies": {
-    "@types/jasmine": "^2.8.6",
-    "@types/jasmine-expect": "3.6.1",
-    "jasmine-core": "^2.9.1",
-    "karma": "^1.7.1",
-    "karma-chrome-launcher": "^2.2.0",
-    "karma-jasmine": "^1.1.1",
-    "karma-jasmine-matchers": "^3.7.0",
-    "karma-spec-reporter": "^0.0.32",
-    "karma-typescript": "^3.0.12",
-    "tslint": "^5.9.1",
-    "typescript": "^2.7.2"
-  }
+    "name": "futurejs",
+    "version": "2.1.0",
+    "description": "Promise-alternative library for doing asynchronous operations",
+    "repository": "https://github.com/IronCoreLabs/futurejs",
+    "author": "IronCore Labs",
+    "license": "MIT",
+    "main": "Future.js",
+    "types": "index.d.ts",
+    "scripts": {
+        "lint": "tslint -p \"tsconfig.json\" Future.ts",
+        "test": "tsc --noEmit && yarn run lint && yarn run unit",
+        "unit": "karma start karma.conf.js",
+        "build": "tsc -d --lib es5,es2015.promise Future.ts && mv Future.d.ts index.d.ts"
+    },
+    "devDependencies": {
+        "@types/jasmine": "^3.3.0",
+        "@types/jasmine-expect": "^3.8.1",
+        "jasmine-core": "^3.3.0",
+        "karma": "^3.1.1",
+        "karma-chrome-launcher": "^2.2.0",
+        "karma-jasmine": "^2.0.1",
+        "karma-jasmine-matchers": "^3.8.3",
+        "karma-spec-reporter": "^0.0.32",
+        "karma-typescript": "^3.0.13",
+        "tslint": "^5.11.0",
+        "typescript": "^3.1.6"
+    },
+    "prettier": {
+        "printWidth": 160,
+        "tabWidth": 4,
+        "trailingComma": "es5",
+        "bracketSpacing": false,
+        "jsxBracketSameLine": true,
+        "arrowParens": "always"
+    }
 }
