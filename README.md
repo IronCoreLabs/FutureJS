@@ -270,7 +270,7 @@ Same as above, but runs four Futures together in parallel which resolve in diffe
 
 ### all (static)
 
-`all<L, R>(futures: Array<Future<R>>): Future<L, R[]>`
+`all<L, R>(futures: Array<Future<L, R>>): Future<L, R[]>`
 
 `all<L, R>(futures: {[key: string]: Future<L, R>}: Future<L, {[key: string]: R}>`
 
