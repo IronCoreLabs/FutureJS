@@ -271,6 +271,7 @@ Same as above, but runs four Futures together in parallel which resolve in diffe
 ### all (static)
 
 `all<L, R>(futures: Array<Future<R>>): Future<L, R[]>`
+
 `all<L, R>(futures: {[key: string]: Future<L, R>}: Future<L, {[key: string]: R}>`
 
 Same as above but runs an arbitrary number of Futures in parallel, all of which result in the same result type. Supports both arbitrary length arrays and objects of any size. If an array is provided the result will be an array with the indices preserved. If an object is provided the result will be an object with the keys preserved.
