@@ -82,15 +82,28 @@ export default class Future<L, R> {
         future4: Future<L, R4>
     ): Future<L, [R1, R2, R3, R4]>;
     /**
-     * Returns a new Future which will run all of the provided futures in parallel. The returned Future will be resolved if all
-     * of the futures resolve and the results will be in an array properly indexed to how they were passed in. If any of the Futures
-     * reject, then no results are returned
+     * Returns a new Future which will run all of the provided futures in parallel. The returned Future will be resolved if all of the Futures
+     * resolve. If an array of Futures is provided the results will be in an array properly indexed to how they were provided. If an object of
+     * Futures is provided the results will be an object with the same keys as the objected provided. If any of the Futures reject, then no results
+     * are returned.
      */
     static all<L, R>(futures: Array<Future<L, R>>): Future<L, R[]>;
+    static all<L, R>(futures: {
+        [key: string]: Future<L, R>;
+    }): Future<
+        L,
+        {
+            [key: string]: R;
+        }
+    >;
     /**
-     * Returns a new Future which will run all of the provided futures in parallel. The returned Future will be resolved if all
-     * of the futures resolve and the results will be in an object properly indexed to how they were passed in. If any of the Futures
-     * reject, then no results are returned
+     * Run all of the Futures in the provided array in parallel and resolve with an array where the results are in the same index
+     * as the provided array.
      */
-    static all<L, R>(futures: {[key: string]: Future<L, R>}): Future<L, {[key: string]: R}>;
+    private static allArray;
+    /**
+     * Run all of the Futures in the provided Future map in parallel and resolve with an object where the results are in the same key
+     * as the provided map.
+     */
+    private static allObject;
 }
