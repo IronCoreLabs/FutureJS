@@ -303,3 +303,6 @@ requests.engage(
 ## License
 
 [MIT licensed](LICENSE)
+
+Copyright (c)  2018-present  IronCore Labs, Inc.
+All rights reserved.
