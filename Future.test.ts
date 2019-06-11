@@ -1,8 +1,9 @@
+import "jest-extended";
 import Future from "./Future";
 
 describe("Future", () => {
     describe("engage", () => {
-        it("runs action provided in constructor with reject/resolve callbacks", () => {
+        test("runs action provided in constructor with reject/resolve callbacks", () => {
             const actionSpy = jasmine.createSpy("futureAction");
             const rejectSpy = jasmine.createSpy("rejectSpy");
             const resolveSpy = jasmine.createSpy("resolveSpy");
@@ -14,7 +15,7 @@ describe("Future", () => {
             expect(resolveSpy).not.toHaveBeenCalled();
         });
 
-        it("invokes reject when action throws exception", () => {
+        test("invokes reject when action throws exception", () => {
             const actionSpy = jasmine.createSpy("futureAction").and.throwError("forced error");
             const rejectSpy = jasmine.createSpy("rejectSpy");
             const resolveSpy = jasmine.createSpy("resolveSpy");
@@ -25,7 +26,7 @@ describe("Future", () => {
             expect(resolveSpy).not.toHaveBeenCalled();
         });
 
-        it("resolves with expected value on success", () => {
+        test("resolves with expected value on success", () => {
             const action = (_reject: (e: Error) => void, resolve: (val: string) => void) => {
                 resolve("my value");
             };
@@ -38,7 +39,7 @@ describe("Future", () => {
     });
 
     describe("toPromise", () => {
-        it("returns a promise which can be chained with return value", () => {
+        test("returns a promise which can be chained with return value", () => {
             const actionSpy = jasmine.createSpy("futureAction");
 
             const prom = new Future(actionSpy).toPromise();
@@ -47,7 +48,7 @@ describe("Future", () => {
             expect(actionSpy).toHaveBeenCalledWith(jasmine.any(Function), jasmine.any(Function));
         });
 
-        it("runs then result with value", (done) => {
+        test("runs then result with value", (done) => {
             const action = (_reject: (e: Error) => void, resolve: (val: string) => void) => {
                 resolve("my value");
             };
@@ -58,7 +59,7 @@ describe("Future", () => {
             });
         });
 
-        it("catches error during exception", (done) => {
+        test("catches error during exception", (done) => {
             const action = (reject: (err: Error) => void) => {
                 reject(new Error("error value"));
             };
@@ -71,7 +72,7 @@ describe("Future", () => {
     });
 
     describe("map", () => {
-        it("converts value to new value", (done) => {
+        test("converts value to new value", (done) => {
             const action = (_reject: (e: Error) => void, resolve: (val: string) => void) => {
                 resolve("my value");
             };
@@ -90,7 +91,7 @@ describe("Future", () => {
                 );
         });
 
-        it("does not run map when first action fails", (done) => {
+        test("does not run map when first action fails", (done) => {
             const action = (reject: (err: Error) => void) => {
                 reject(new Error("error value"));
             };
@@ -110,7 +111,7 @@ describe("Future", () => {
     });
 
     describe("flatMap", () => {
-        it("maps futures together", (done) => {
+        test("maps futures together", (done) => {
             const action = (_reject: (e: Error) => void, resolve: (val: string) => void) => {
                 resolve("my value");
             };
@@ -131,7 +132,7 @@ describe("Future", () => {
                 );
         });
 
-        it("does not invoke flatMap when first action fails", (done) => {
+        test("does not invoke flatMap when first action fails", (done) => {
             const action = (reject: (e: Error) => void) => {
                 reject(new Error("error value"));
             };
@@ -150,7 +151,7 @@ describe("Future", () => {
                 );
         });
 
-        it("invokes reject handler if flatMap fails", (done) => {
+        test("invokes reject handler if flatMap fails", (done) => {
             const action = (_reject: (e: Error) => void, resolve: (val: string) => void) => {
                 resolve("my value");
             };
@@ -173,7 +174,7 @@ describe("Future", () => {
     });
 
     describe("handleWith", () => {
-        it("allows mapping of error to new result", (done) => {
+        test("allows mapping of error to new result", (done) => {
             const action = (reject: (e: Error) => void) => {
                 reject(new Error("failure content"));
             };
@@ -194,7 +195,7 @@ describe("Future", () => {
                 );
         });
 
-        it("does not get run if action succeeds", (done) => {
+        test("does not get run if action succeeds", (done) => {
             const action = (_reject: (e: Error) => void, resolve: (val: string) => void) => {
                 resolve("my value");
             };
@@ -215,7 +216,7 @@ describe("Future", () => {
     });
 
     describe("errorMap", () => {
-        it("converts error to new error value", (done) => {
+        test("converts error to new error value", (done) => {
             const action = (reject: (err: Error) => void) => {
                 reject(new Error("error value"));
             };
@@ -234,7 +235,7 @@ describe("Future", () => {
                 );
         });
 
-        it("does not get invoked when action succeeds", (done) => {
+        test("does not get invoked when action succeeds", (done) => {
             const action = (_reject: (e: Error) => void, resolve: (val: string) => void) => {
                 resolve("my value");
             };
@@ -255,7 +256,7 @@ describe("Future", () => {
     });
 
     describe("tryF", () => {
-        it("resolves with the return value of the provided function", () => {
+        test("resolves with the return value of the provided function", () => {
             const fnToValue = jasmine.createSpy("fnToValue").and.returnValue("test");
 
             Future.tryF(fnToValue).engage(
@@ -267,7 +268,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects if the provided function throws an exception", () => {
+        test("rejects if the provided function throws an exception", () => {
             const fnToException = jasmine.createSpy("fnToPromise").and.throwError("forced failure");
 
             Future.tryF(fnToException).engage(
@@ -281,7 +282,7 @@ describe("Future", () => {
     });
 
     describe("tryP", () => {
-        it("wraps returned promise in then/catch if returned", () => {
+        test("wraps returned promise in then/catch if returned", () => {
             const fauxCatch = jasmine.createSpy("fauxCatch");
             const fauxThen = jasmine.createSpy("fauxThen").and.returnValue({
                 catch: fauxCatch,
@@ -299,7 +300,7 @@ describe("Future", () => {
             expect(fauxCatch).toHaveBeenCalledWith(rejectSpy);
         });
 
-        it("rejects if function that creates the promise throws an exception", () => {
+        test("rejects if function that creates the promise throws an exception", () => {
             const fnToPromise = jasmine.createSpy("fnToPromise").and.throwError("forced failure");
 
             Future.tryP(fnToPromise).engage(
@@ -313,7 +314,7 @@ describe("Future", () => {
     });
 
     describe("of", () => {
-        it("resolves Future with provided value", (done) => {
+        test("resolves Future with provided value", (done) => {
             Future.of("fixed value").engage(
                 () => fail("reject handler should never be called when using Future.of"),
                 (val) => {
@@ -325,7 +326,7 @@ describe("Future", () => {
     });
 
     describe("reject", () => {
-        it("rejects Future with provided value", (done) => {
+        test("rejects Future with provided value", (done) => {
             Future.reject(new Error("fixed error")).engage(
                 (err) => {
                     expect(err).toEqual(new Error("fixed error"));
@@ -337,7 +338,7 @@ describe("Future", () => {
     });
 
     describe("encase", () => {
-        it("resolves with value of calling method", () => {
+        test("resolves with value of calling method", () => {
             const fn = jasmine.createSpy("fn").and.returnValue("test");
             const val = "provided value";
 
@@ -350,7 +351,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects if function throws an exception", () => {
+        test("rejects if function throws an exception", () => {
             const fn = jasmine.createSpy("fn").and.throwError("forced failure");
             const val = "provided value";
 
@@ -364,7 +365,7 @@ describe("Future", () => {
     });
 
     describe("gather2", () => {
-        it("resolves both futures provided", () => {
+        test("resolves both futures provided", () => {
             const f1 = Future.of("first future value");
             const f2 = Future.of("second future value");
 
@@ -384,7 +385,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects with error when first future fails", () => {
+        test("rejects with error when first future fails", () => {
             const f1 = Future.reject(new Error("first failed future"));
             const f2 = Future.of("second future value");
 
@@ -401,7 +402,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects with error when any subsequent future fails", () => {
+        test("rejects with error when any subsequent future fails", () => {
             const f1 = Future.of("first future value");
             const f2 = Future.reject(new Error("second failure message"));
 
@@ -418,7 +419,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects with first error that occured when multiple errors", (done) => {
+        test("rejects with first error that occured when multiple errors", (done) => {
             const f1 = new Future((reject: (err: Error) => void) => {
                 setTimeout(() => {
                     reject(new Error("first failure message"));
@@ -440,7 +441,7 @@ describe("Future", () => {
             );
         });
 
-        it("engages all futures without waiting", (done) => {
+        test("engages all futures without waiting", (done) => {
             const f1 = new Future((_, resolve) => {
                 setTimeout(() => resolve("first future value"));
             });
@@ -466,7 +467,7 @@ describe("Future", () => {
     });
 
     describe("gather3", () => {
-        it("resolves with array of values when all 3 Futures succeed", () => {
+        test("resolves with array of values when all 3 Futures succeed", () => {
             const f1 = Future.of("first future value");
             const f2 = Future.of("second future value");
             const f3 = Future.of("third future value");
@@ -490,7 +491,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects with error when first future fails", () => {
+        test("rejects with error when first future fails", () => {
             const f1 = Future.reject(new Error("first failed future"));
             const f2 = Future.of("second future value");
             const f3 = Future.of("third future value");
@@ -510,7 +511,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects with error when any subsequent future fails", () => {
+        test("rejects with error when any subsequent future fails", () => {
             const f1 = Future.of("first future value");
             const f2 = Future.reject(new Error("second failure message"));
             const f3 = Future.of("third future value");
@@ -530,7 +531,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects with first error that occured when multiple errors", (done) => {
+        test("rejects with first error that occured when multiple errors", (done) => {
             const f1 = new Future((reject: (err: Error) => void) => {
                 setTimeout(() => {
                     reject(new Error("first failure message"));
@@ -555,7 +556,7 @@ describe("Future", () => {
             );
         });
 
-        it("engages all futures without waiting", (done) => {
+        test("engages all futures without waiting", (done) => {
             const f1 = new Future((reject: (err: Error) => void) => {
                 setTimeout(() => reject(new Error("first failure message")));
             });
@@ -584,7 +585,7 @@ describe("Future", () => {
     });
 
     describe("gather4", () => {
-        it("resolves with array of values when all 3 Futures succeed", () => {
+        test("resolves with array of values when all 3 Futures succeed", () => {
             const f1 = Future.of("first future value");
             const f2 = Future.of("second future value");
             const f3 = Future.of("third future value");
@@ -612,7 +613,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects with error when any subsequent future fails", () => {
+        test("rejects with error when any subsequent future fails", () => {
             const f1 = Future.of("first future value");
             const f2 = Future.reject(new Error("second failure message"));
             const f3 = Future.of("third future value");
@@ -635,7 +636,7 @@ describe("Future", () => {
             );
         });
 
-        it("engages all futures without waiting", (done) => {
+        test("engages all futures without waiting", (done) => {
             const f1 = new Future((reject: (err: Error) => void) => {
                 setTimeout(() => reject(new Error("first failure message")));
             });
@@ -667,7 +668,7 @@ describe("Future", () => {
     });
 
     describe("all", () => {
-        it("resolves with array of values when all Futures succeed", (done) => {
+        test("resolves with array of values when all Futures succeed", (done) => {
             const f1 = Future.of("first future value");
             const f2 = Future.of("second future value");
             const f3 = Future.of("third future value");
@@ -695,7 +696,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects with error when first future fails", (done) => {
+        test("rejects with error when first future fails", (done) => {
             const f1 = Future.reject(new Error("first failed future"));
             const f2 = Future.of("second future value");
 
@@ -715,7 +716,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects with error when any subsequent future fails", (done) => {
+        test("rejects with error when any subsequent future fails", (done) => {
             const f1 = Future.of("first future value");
             const f2 = Future.reject(new Error("second failure message"));
 
@@ -735,7 +736,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects with first error that occured when multiple errors", (done) => {
+        test("rejects with first error that occured when multiple errors", (done) => {
             const f1 = new Future((reject: (err: Error) => void) => {
                 setTimeout(() => {
                     reject(new Error("first failure message"));
@@ -761,7 +762,7 @@ describe("Future", () => {
     });
 
     describe("allObject", () => {
-        it("resolves with object with expected keys", (done) => {
+        test("resolves with object with expected keys", (done) => {
             const f1 = Future.of("first future value");
             const f2 = Future.of("second future value");
             const f3 = Future.of("third future value");
@@ -789,7 +790,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects with error when first future fails", (done) => {
+        test("rejects with error when first future fails", (done) => {
             const f1 = Future.reject(new Error("first failed future"));
             const f2 = Future.of("second future value");
 
@@ -809,7 +810,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects with error when any subsequent future fails", (done) => {
+        test("rejects with error when any subsequent future fails", (done) => {
             const f1 = Future.of("first future value");
             const f2 = Future.reject(new Error("second failure message"));
 
@@ -829,7 +830,7 @@ describe("Future", () => {
             );
         });
 
-        it("rejects with first error that occured when multiple errors", (done) => {
+        test("rejects with first error that occured when multiple errors", (done) => {
             const f1 = new Future((reject: (err: Error) => void) => {
                 setTimeout(() => {
                     reject(new Error("first failure message"));
