@@ -4,7 +4,7 @@ node_js:
 - 12
 branches:
   only:
-  - master
+  - main
 notifications:
   email:
     on_success: change

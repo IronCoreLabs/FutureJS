@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/IronCoreLabs/FutureJS.svg?branch=master)](https://travis-ci.org/IronCoreLabs/FutureJS)
+[![Build Status](https://travis-ci.org/IronCoreLabs/FutureJS.svg?branch=main)](https://travis-ci.org/IronCoreLabs/FutureJS)
 [![NPM Version](https://badge.fury.io/js/futurejs.svg)](https://www.npmjs.com/package/futurejs)
 
 # FutureJS
