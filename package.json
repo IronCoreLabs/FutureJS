@@ -1,6 +1,6 @@
 {
     "name": "futurejs",
-    "version": "2.1.1",
+    "version": "2.1.2",
     "description": "Promise-alternative library for doing asynchronous operations",
     "repository": "https://github.com/IronCoreLabs/futurejs",
     "author": "IronCore Labs",
@@ -8,18 +8,23 @@
     "main": "Future.js",
     "types": "index.d.ts",
     "scripts": {
-        "lint": "tslint -p \"tsconfig.json\" Future.ts",
+        "lint": "eslint . --ext .ts,.tsx",
         "test": "tsc --noEmit && yarn run lint && yarn run unit",
         "unit": "jest",
         "build": "tsc -d --lib es5,es2015.promise Future.ts && mv Future.d.ts index.d.ts"
     },
     "devDependencies": {
-        "@types/jest": "^26.0.15",
+        "@types/jest": "^26.0.22",
+        "@typescript-eslint/eslint-plugin": "^4.21.0",
+        "@typescript-eslint/parser": "^4.21.0",
+        "eslint": "^7.23.0",
+        "eslint-plugin-import": "^2.22.1",
+        "eslint-plugin-jsdoc": "^32.3.0",
+        "eslint-plugin-prefer-arrow": "^1.2.3",
         "jest": "^26.6.0",
         "jest-extended": "^0.11.5",
         "ts-jest": "^26.4.4",
-        "tslint": "^5.17.0",
-        "typescript": "^3.5.1"
+        "typescript": "^4.2.4"
     },
     "prettier": {
         "printWidth": 160,
@@ -28,5 +33,6 @@
         "bracketSpacing": false,
         "jsxBracketSameLine": true,
         "arrowParens": "always"
-    }
+    },
+    "dependencies": {}
 }

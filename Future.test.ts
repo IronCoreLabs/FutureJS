@@ -2,6 +2,7 @@ import "jest-extended";
 import Future from "./Future";
 
 describe("Future", () => {
+    /* eslint-disable @typescript-eslint/unbound-method */
     describe("engage", () => {
         test("runs action provided in constructor with reject/resolve callbacks", () => {
             const actionSpy = jasmine.createSpy("futureAction");
@@ -53,10 +54,13 @@ describe("Future", () => {
                 resolve("my value");
             };
 
-            new Future(action).toPromise().then((val: string) => {
-                expect(val).toEqual("my value");
-                done();
-            });
+            new Future(action)
+                .toPromise()
+                .then((val: string) => {
+                    expect(val).toEqual("my value");
+                    done();
+                })
+                .catch(() => fail("shouldn't fail"));
         });
 
         test("catches error during exception", (done) => {
@@ -395,6 +399,7 @@ describe("Future", () => {
             Future.gather2(f1, f2).engage(
                 (err) => {
                     expect(err).toEqual(new Error("first failed future"));
+
                     expect(f1.engage).toHaveBeenCalled();
                     expect(f2.engage).not.toHaveBeenCalled();
                 },
@@ -759,6 +764,18 @@ describe("Future", () => {
                 }
             );
         });
+
+        test("resolves immediately if the array is empty.", (done) => {
+            Future.all([]).engage(
+                () => {
+                    fail("an empty array of futures shouldn't fail");
+                },
+                (arr) => {
+                    expect(arr).toEqual([]);
+                    done();
+                }
+            );
+        });
     });
 
     describe("allObject", () => {
@@ -850,6 +867,18 @@ describe("Future", () => {
                 },
                 () => {
                     fail("resolve callback should not be invoked when any of the futures fail");
+                }
+            );
+        });
+
+        test("resolves immediately if the object is empty.", (done) => {
+            Future.all({}).engage(
+                () => {
+                    fail("an empty object of futures shouldn't fail");
+                },
+                (obj) => {
+                    expect(obj).toEqual({});
+                    done();
                 }
             );
         });
