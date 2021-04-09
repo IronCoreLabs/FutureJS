@@ -1,0 +1,4 @@
+# By default, update-workflows only keeps itself up to date. This patch tells it to take control of additional workflows.
+- op: replace
+  path: /env/WORKFLOWS
+  value: update-workflows.yaml bump-version.yaml docker.yaml deploy.yaml typescript-ci.yaml
