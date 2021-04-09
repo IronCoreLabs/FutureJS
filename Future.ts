@@ -226,6 +226,10 @@ export default class Future<L, R> {
             let count = 0;
             let done = false;
 
+            if (futures.length === 0) {
+                resolve(results);
+            }
+
             futures.forEach((futureInstance, index) => {
                 futureInstance.engage(
                     (error) => {

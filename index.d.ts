@@ -75,12 +75,7 @@ export default class Future<L, R> {
     /**
      * Same as gather2 except supports running four concurrent Futures
      */
-    static gather4<L, R1, R2, R3, R4>(
-        future1: Future<L, R1>,
-        future2: Future<L, R2>,
-        future3: Future<L, R3>,
-        future4: Future<L, R4>
-    ): Future<L, [R1, R2, R3, R4]>;
+    static gather4<L, R1, R2, R3, R4>(future1: Future<L, R1>, future2: Future<L, R2>, future3: Future<L, R3>, future4: Future<L, R4>): Future<L, [R1, R2, R3, R4]>;
     /**
      * Returns a new Future which will run all of the provided futures in parallel. The returned Future will be resolved if all of the Futures
      * resolve. If an array of Futures is provided the results will be in an array properly indexed to how they were provided. If an object of
@@ -90,12 +85,9 @@ export default class Future<L, R> {
     static all<L, R>(futures: Array<Future<L, R>>): Future<L, R[]>;
     static all<L, R>(futures: {
         [key: string]: Future<L, R>;
-    }): Future<
-        L,
-        {
-            [key: string]: R;
-        }
-    >;
+    }): Future<L, {
+        [key: string]: R;
+    }>;
     /**
      * Run all of the Futures in the provided array in parallel and resolve with an array where the results are in the same index
      * as the provided array.

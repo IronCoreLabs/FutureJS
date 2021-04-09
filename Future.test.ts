@@ -759,6 +759,18 @@ describe("Future", () => {
                 }
             );
         });
+
+        test("resolves immediately if the array is empty.", (done) => {
+            Future.all([]).engage(
+                () => {
+                    fail("an empty array of futures shouldn't fail");
+                },
+                (arr) => {
+                    expect(arr).toEqual([]);
+                    done();
+                }
+            );
+        });
     });
 
     describe("allObject", () => {
@@ -850,6 +862,18 @@ describe("Future", () => {
                 },
                 () => {
                     fail("resolve callback should not be invoked when any of the futures fail");
+                }
+            );
+        });
+
+        test("resolves immediately if the object is empty.", (done) => {
+            Future.all({}).engage(
+                () => {
+                    fail("an empty object of futures shouldn't fail");
+                },
+                (obj) => {
+                    expect(obj).toEqual({});
+                    done();
                 }
             );
         });
