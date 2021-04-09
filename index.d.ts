@@ -40,53 +40,53 @@ export default class Future<L, R> {
      * Wrap the provided function in a Future which will either resolve with it's return value or reject with any exception it throws.
      * @param {Function} fn Function to invoke when Future is engaged
      */
-    static tryF<L extends Error, R>(fn: () => R): Future<L, R>;
+    static tryF<LS extends Error, RS>(fn: () => RS): Future<LS, RS>;
     /**
      * Wrap the provided function which returns a Promise within a Future. If the function either throws an error or the resulting Promise rejects, the Future will
      * also reject. Otherwise, the Future will resolve with the result of the resolved Promise.
      * @param {Function} fn Function to invoke which returns a Promise
      */
-    static tryP<L extends Error, R>(fn: () => Promise<R> | PromiseLike<R>): Future<L, R>;
+    static tryP<LS extends Error, RS>(fn: () => Promise<RS> | PromiseLike<RS>): Future<LS, RS>;
     /**
      * Create a new synchronous Future which will automatically resolve with the provided value
      */
-    static of<R>(result: R): Future<never, R>;
+    static of<RS>(result: RS): Future<never, RS>;
     /**
      * Create a new synchronous Future which will automatically reject with the provided value
      */
-    static reject<L>(error: L): Future<L, never>;
+    static reject<LS>(error: LS): Future<LS, never>;
     /**
      * Takes a function and a value and creates a new Future which will attempt to run the function with the value
      * and reject if the method throws an exception.
      * @param {Function} fn The function to execute
      * @param {A}        a  The value to pass to the function
      */
-    static encase<L extends Error, R, A>(fn: (a: A) => R, a: A): Future<L, R>;
+    static encase<LS extends Error, RS, A>(fn: (a: A) => RS, a: A): Future<LS, RS>;
     /**
      * Returns a new Future which will run the two provided futures in "parallel". The returned Future will be resolved if both
      * of the futures resolve and the results will be in an array properly indexed to how they were passed in. If any of the Futures
      * reject, then no results are returned and the Future is rejected.
      */
-    static gather2<L, R1, R2>(future1: Future<L, R1>, future2: Future<L, R2>): Future<L, [R1, R2]>;
+    static gather2<LS, R1, R2>(future1: Future<LS, R1>, future2: Future<LS, R2>): Future<LS, [R1, R2]>;
     /**
      * Same as gather2 except supports running three concurrent Futures
      */
-    static gather3<L, R1, R2, R3>(future1: Future<L, R1>, future2: Future<L, R2>, future3: Future<L, R3>): Future<L, [R1, R2, R3]>;
+    static gather3<LS, R1, R2, R3>(future1: Future<LS, R1>, future2: Future<LS, R2>, future3: Future<LS, R3>): Future<LS, [R1, R2, R3]>;
     /**
      * Same as gather2 except supports running four concurrent Futures
      */
-    static gather4<L, R1, R2, R3, R4>(future1: Future<L, R1>, future2: Future<L, R2>, future3: Future<L, R3>, future4: Future<L, R4>): Future<L, [R1, R2, R3, R4]>;
+    static gather4<LS, R1, R2, R3, R4>(future1: Future<LS, R1>, future2: Future<LS, R2>, future3: Future<LS, R3>, future4: Future<LS, R4>): Future<LS, [R1, R2, R3, R4]>;
     /**
      * Returns a new Future which will run all of the provided futures in parallel. The returned Future will be resolved if all of the Futures
      * resolve. If an array of Futures is provided the results will be in an array properly indexed to how they were provided. If an object of
      * Futures is provided the results will be an object with the same keys as the objected provided. If any of the Futures reject, then no results
      * are returned.
      */
-    static all<L, R>(futures: Array<Future<L, R>>): Future<L, R[]>;
-    static all<L, R>(futures: {
-        [key: string]: Future<L, R>;
-    }): Future<L, {
-        [key: string]: R;
+    static all<LS, RS>(futures: Future<LS, RS>[]): Future<LS, RS[]>;
+    static all<LS, RS>(futures: {
+        [key: string]: Future<LS, RS>;
+    }): Future<LS, {
+        [key: string]: RS;
     }>;
     /**
      * Run all of the Futures in the provided array in parallel and resolve with an array where the results are in the same index
