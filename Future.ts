@@ -55,12 +55,9 @@ export default class Future<L, R> {
      */
     handleWith<RepairedType extends R>(errHandler: (e: L) => Future<L, RepairedType>): Future<L, RepairedType> {
         return new Future<L, RepairedType>((reject: Reject<L>, resolve: Resolve<RepairedType>) => {
-            this.engage(
-                (error) => {
-                    errHandler(error).engage(reject, resolve);
-                },
-                resolve as Resolve<R>
-            ); //Type cast this as the resolved method should be able to handle both R and RepairedType
+            this.engage((error) => {
+                errHandler(error).engage(reject, resolve);
+            }, resolve as Resolve<R>); //Type cast this as the resolved method should be able to handle both R and RepairedType
         });
     }
 
@@ -199,7 +196,12 @@ export default class Future<L, R> {
     /**
      * Same as gather2 except supports running four concurrent Futures
      */
-    static gather4<LS, R1, R2, R3, R4>(future1: Future<LS, R1>, future2: Future<LS, R2>, future3: Future<LS, R3>, future4: Future<LS, R4>): Future<LS, [R1, R2, R3, R4]> {
+    static gather4<LS, R1, R2, R3, R4>(
+        future1: Future<LS, R1>,
+        future2: Future<LS, R2>,
+        future3: Future<LS, R3>,
+        future4: Future<LS, R4>
+    ): Future<LS, [R1, R2, R3, R4]> {
         const firstTwo = this.gather2(future1, future2);
         const secondTwo = this.gather2(future3, future4);
         return this.gather2(firstTwo, secondTwo).map<[R1, R2, R3, R4]>(([[f1, f2], [f3, f4]]) => [f1, f2, f3, f4]);
@@ -225,7 +227,6 @@ export default class Future<L, R> {
         return new Future((reject: Reject<LS>, resolve: Resolve<RS[]>) => {
             const results: RS[] = [];
             let count = 0;
-            let done = false;
 
             if (futures.length === 0) {
                 resolve(results);
@@ -234,10 +235,7 @@ export default class Future<L, R> {
             futures.forEach((futureInstance, index) => {
                 futureInstance.engage(
                     (error) => {
-                        if (!done) {
-                            done = true;
-                            reject(error);
-                        }
+                        reject(error);
                     },
                     (result) => {
                         results[index] = result;
@@ -261,14 +259,11 @@ export default class Future<L, R> {
         const futuresArray = futureKeys.map((key) => futures[key]);
         return this.allArray(futuresArray).map((futureResults) => {
             //Now iterate over the original keys and build a new map from key to Future result
-            return futureKeys.reduce(
-                (futureMap, futureKey, index) => {
-                    //The index of the object keys will be the same index as the expected result
-                    futureMap[futureKey] = futureResults[index];
-                    return futureMap;
-                },
-                {} as {[key: string]: RS}
-            );
+            return futureKeys.reduce((futureMap, futureKey, index) => {
+                //The index of the object keys will be the same index as the expected result
+                futureMap[futureKey] = futureResults[index];
+                return futureMap;
+            }, {} as {[key: string]: RS});
         });
     }
 }

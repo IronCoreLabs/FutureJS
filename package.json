@@ -10,7 +10,7 @@
     "scripts": {
         "lint": "eslint . --ext .ts,.tsx",
         "test": "tsc --noEmit && yarn run lint && yarn run unit",
-        "unit": "jest",
+        "unit": "jest --coverage",
         "build": "tsc -d --lib es5,es2015.promise Future.ts && mv Future.d.ts index.d.ts"
     },
     "devDependencies": {

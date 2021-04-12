@@ -1,0 +1,38 @@
+# CI tasks for Node (TypeScript, JavaScript) repositories.
+
+# Customization:
+# - Any custom setup steps can be inserted after step 0. (path: /jobs/test/steps/1 in typescript-ci-patch.yaml)
+# - Add/Remove/Replace the Node versions in the matrix. (path: /jobs/test/strategy/matrix/node_version in typescript-ci-patch.yaml)
+
+name: TypeScript CI
+
+'on':
+  push:
+    branches:
+      - main
+  pull_request: null
+  workflow_dispatch: null
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        node_version:
+        - "12"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: c-hive/gha-yarn-cache@v1
+      - uses: actions/setup-node@v2.1.5
+        with:
+          node-version: ${{ matrix.node_version }}
+      - name: Install modules
+        run: yarn
+      - name: Run tests
+        run: yarn run test
+      - name: Check test coverage
+        if: github.base_ref != ''
+        uses: anuraag016/Jest-Coverage-Diff@V1.1
+        with:
+          fullCoverageDiff: false
+          delta: 0.2
