@@ -1,6 +1,6 @@
 {
     "name": "futurejs",
-    "version": "2.1.2",
+    "version": "2.1.3-pre",
     "description": "Promise-alternative library for doing asynchronous operations",
     "repository": "https://github.com/IronCoreLabs/futurejs",
     "author": "IronCore Labs",
