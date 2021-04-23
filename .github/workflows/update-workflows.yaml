@@ -12,8 +12,6 @@ name: Update Workflows
   schedule:
   - cron: 34 7 * * 1-5
   workflow_dispatch: null
-env:
-  WORKFLOWS: update-workflows.yaml bump-version.yaml typescript-ci.yaml
 jobs:
   update:
     runs-on: ubuntu-20.04
@@ -35,10 +33,10 @@ jobs:
     - name: Update workflows
       id: update
       working-directory: thisrepo
-      run: "set -x\nset -o pipefail\n\nbash -x .github/update-workflows.sh ${WORKFLOWS}\n\
-        \necho \"Git status:\"\ngit status\n\ngit add -a\n\nif [ -z \"$(git status\
-        \ --porcelain)\" ] ; then\n  echo \"No updated workflows; done.\"\n  echo\
-        \ \"::set-output name=skip::true\"\nfi\n"
+      run: "set -x\nset -o pipefail\n\nbash -x .github/update-workflows.sh\n\necho\
+        \ \"Git status:\"\ngit status\n\ngit add -A\n\nif [ -z \"$(git status --porcelain)\"\
+        \ ] ; then\n  echo \"No updated workflows; done.\"\n  echo \"::set-output\
+        \ name=skip::true\"\nfi\n"
     - name: Commit and PR
       working-directory: thisrepo
       if: steps.update.outputs.skip != 'true'
