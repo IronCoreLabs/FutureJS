@@ -30,7 +30,7 @@ case "$#" in
 esac
 
 # Find the version files in this directory or its descendants, but don't recurse too deep.
-VERSFILES=$(find . -maxdepth 3 ! -path ./.git/\* | grep -E '.*/(Cargo.toml|package.json|pom.xml|version.sbt)$')
+VERSFILES=$(find . -maxdepth 3 ! -path ./.git/\* | grep -E '.*/(version|Cargo.toml|package.json|pom.xml|version.sbt)$')
 
 # Do we have at least one?
 if [ -z "${VERSFILES}" ] ; then
@@ -43,6 +43,10 @@ CURRENTVERS=""
 for FILE in ${VERSFILES} ; do
     # Parse each version file according to its type.
     case $(basename "${FILE}") in
+    version)
+        # It's a file to capture version info for generic things that don't have their own format.
+        VERS=$(cat "${FILE}")
+        ;;
     Cargo.toml)
         VERS=$(cargo metadata --manifest-path "${FILE}" --no-deps --offline --format-version 1 | jq -r '.packages[0].version')
         ;;
@@ -122,6 +126,10 @@ fi
 for FILE in ${VERSFILES} ; do
     DIR=$(dirname "${FILE}")
     case $(basename "${FILE}") in
+    version)
+        echo "${NEWVERS}" > "${FILE}"
+        ;;
+
     Cargo.toml)
         sed -i 's/^version = ".*"$/version = "'"${NEWVERS}"'"/' "${FILE}"
 

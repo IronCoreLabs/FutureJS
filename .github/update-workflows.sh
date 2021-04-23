@@ -6,11 +6,25 @@
 set -e
 set -o pipefail
 
-if [ $# -lt 1 ] ; then
-    echo "Must list workflow files to update." 1>&2
-    exit 1
+THISREPO=$(git rev-parse --show-toplevel)
+TEMPLATES="${THISREPO}/../depot/github-actions"
+
+if [ $# -ge 1 ] ; then
+    WORKFLOWS=$*
+else
+    # Scan to see which templates are installed, and update them.
+    for WF in "${THISREPO}"/.github/workflows/*.yaml ; do
+        BASE=$(basename "${WF}")
+        if [ -f "${TEMPLATES}/${BASE}" ] ; then
+            WORKFLOWS="${WORKFLOWS} ${BASE}"
+        fi
+    done
+
+    if [ -z "${WORKFLOWS}" ] ; then
+        echo "No workflows specified as args, and none found in ${THISREPO}/.github/workflows." 1>&2
+        exit 1
+    fi
 fi
-WORKFLOWS=$*
 
 for X in jsonpatch yaml2json json2yaml ; do
     if ! command -v ${X} &> /dev/null ; then
@@ -18,9 +32,6 @@ for X in jsonpatch yaml2json json2yaml ; do
         exit 1
     fi
 done
-
-THISREPO=$(git rev-parse --show-toplevel)
-TEMPLATES="${THISREPO}/../depot/github-actions"
 
 mkdir -p "${THISREPO}/.github/workflows"
 for WF in ${WORKFLOWS} ; do
@@ -44,7 +55,12 @@ for WF in ${WORKFLOWS} ; do
     ) > "${THISREPO}/.github/workflows/${WF}"
 
     # Copy any related files or directories with the same name.
-    find "${TEMPLATES}" -name "${BASE}.*" ! -name "${BASE}.yaml" -exec cp -r {} "${THISREPO}/.github" \;
+    find "${TEMPLATES}" -name "${BASE}.*" ! -name "${BASE}.yaml" -print | while read -r SRCFILE ; do
+        DSTFILE="${THISREPO}/.github/$(basename "${SRCFILE}")"
+        # First unlink it, to prevent this script from overwriting itself while it's running.
+        rm -f "${DSTFILE}"
+        cp "${SRCFILE}" "${DSTFILE}"
+    done
 
     # If there's an example patch file in depot, but none in this repo, copy it over.
     # If you add an example patch file that's really optional, you'll need to change this logic.
