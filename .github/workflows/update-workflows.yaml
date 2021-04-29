@@ -33,10 +33,12 @@ jobs:
     - name: Update workflows
       id: update
       working-directory: thisrepo
-      run: "set -x\nset -o pipefail\n\nbash -x .github/update-workflows.sh\n\necho\
-        \ \"Git status:\"\ngit status\n\ngit add -A\n\nif [ -z \"$(git status --porcelain)\"\
-        \ ] ; then\n  echo \"No updated workflows; done.\"\n  echo \"::set-output\
-        \ name=skip::true\"\nfi\n"
+      run: "set -x\nset -o pipefail\n\n# If it fails, we still want to create a PR;\
+        \ it helps signal a human to come fix it.\nif ! bash -x .github/update-workflows.sh\
+        \ ; then\n  echo \"::set-output name=failed::true\"\nelse\n  echo \"::set-output\
+        \ name=failed::false\"\nfi\n\necho \"Git status:\"\ngit status\n\ngit add\
+        \ -A\n\nif [ -z \"$(git status --porcelain)\" ] ; then\n  echo \"No updated\
+        \ workflows; done.\"\n  echo \"::set-output name=skip::true\"\nfi\n"
     - name: Commit and PR
       working-directory: thisrepo
       if: steps.update.outputs.skip != 'true'
@@ -50,9 +52,9 @@ jobs:
         \ a PR.\ncurl -Ss -X POST \\\n  -H \"Authorization: token ${{ secrets.WORKFLOW_PAT\
         \ }}\" \\\n  -H \"Content-Type: application/json\" \\\n  --data '{\"title\"\
         : \"Update workflows from templates\",\n    \"head\": \"'${NEW_BRANCH}'\"\
-        ,\n    \"base\": \"main\",\n    \"body\": \"Updating from templates.\"\n \
-        \   }' \\\n  https://api.github.com/repos/${{ github.repository }}/pulls \\\
-        \n  | tee pr.json\n\n# Label the PR.\nPR=$(jq -r '.issue_url' < pr.json)\n\
-        curl -Ss -X POST \\\n  -H \"Authorization: token ${{ secrets.WORKFLOW_PAT\
-        \ }}\" \\\n  -H \"Content-Type: application/json\" \\\n  --data '{\"labels\"\
-        : [\"ops\"]}' \\\n  \"${PR}/labels\"\n"
+        ,\n    \"base\": \"main\",\n    \"body\": \"Updating from templates.\",\n\
+        \    \"draft\": \"${{ steps.update.outputs.failed }}\"\n    }' \\\n  https://api.github.com/repos/${{\
+        \ github.repository }}/pulls \\\n  | tee pr.json\n\n# Label the PR.\nPR=$(jq\
+        \ -r '.issue_url' < pr.json)\ncurl -Ss -X POST \\\n  -H \"Authorization: token\
+        \ ${{ secrets.WORKFLOW_PAT }}\" \\\n  -H \"Content-Type: application/json\"\
+        \ \\\n  --data '{\"labels\": [\"ops\"]}' \\\n  \"${PR}/labels\"\n"
