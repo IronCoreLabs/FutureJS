@@ -31,7 +31,7 @@ jobs:
         git config --global user.name "Leeroy Travis"
 
         '
-    - name: Get version
+    - name: Compute versions
       id: versions
       run: 'set -x
 
@@ -54,13 +54,17 @@ jobs:
         git diff --cached
 
         '
-    - name: Commit and push release tag
+    - name: Commit release
       run: 'git commit -m "${COMMIT_PREFIX}Set release version ${{ steps.versions.outputs.release
         }}"
 
-        git tag "${{ steps.versions.outputs.release }}"
+        '
+    - name: Tag release
+      run: 'git tag "${{ steps.versions.outputs.release }}"
 
-        git push origin main "${{ steps.versions.outputs.release }}"
+        '
+    - name: Push release tag
+      run: 'git push origin main "${{ steps.versions.outputs.release }}"
 
         '
     - name: Create prerelease
