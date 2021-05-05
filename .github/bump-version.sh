@@ -178,18 +178,16 @@ for FILE in ${VERSFILES} ; do
 
     # Add it to git.
     git add "${FILE}"
-    # Verify that we've changed exactly one line.
+    # Verify that we've changed zero or one line.
     git diff --cached -w --numstat "${FILE}" > /tmp/diffcount
-    if ! [ -s /tmp/diffcount ] ; then
-        echo "No changes made to '${FILE}' when setting version to '${NEWVERS}'; aborting."
-        exit 1
-    fi
-    # shellcheck disable=SC2034
-    read -r ADDED REMOVED FILENAME < /tmp/diffcount
-    if [ "${ADDED}" -ne 1 ] || [ "${REMOVED}" -ne 1 ] ; then
-        echo "Changes to '${FILE}' must be exactly one line, but observed edits are:" 1>&2
-        git diff --cached "${FILE}" 1>&2
-        exit 1
+    if [ -s /tmp/diffcount ] ; then
+        # shellcheck disable=SC2034
+        read -r ADDED REMOVED FILENAME < /tmp/diffcount
+        if [ "${ADDED}" -ne 1 ] || [ "${REMOVED}" -ne 1 ] ; then
+            echo "Changes to '${FILE}' must be zero or one line, but observed edits are:" 1>&2
+            git diff --cached "${FILE}" 1>&2
+            exit 1
+        fi
     fi
 done
 
