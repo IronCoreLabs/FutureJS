@@ -168,7 +168,11 @@ for FILE in ${VERSFILES} ; do
         # Replace -foo with -SNAPSHOT to be compatible with Java conventions.
         JAVAVERS="${NEWVERS/-*/-SNAPSHOT}"
 
-        sed -i 's/^version in ThisBuild := ".*"$/version in ThisBuild := "'"${JAVAVERS}"'"/' "${FILE}"
+        # The file might use the old, deprecated syntax or the newer syntax:
+        # version in ThisBuild := "1.2.3-SNAPSHOT"
+        # ThisBuild / version := "1.2.3-SNAPSHOT"
+        sed -i 's,^ThisBuild / version := ".*"$,ThisBuild / version := "'"${JAVAVERS}"'",' "${FILE}"
+        sed -i 's,^version in ThisBuild := ".*"$,ThisBuild / version := "'"${JAVAVERS}"'",' "${FILE}"
         ;;
 
     *)

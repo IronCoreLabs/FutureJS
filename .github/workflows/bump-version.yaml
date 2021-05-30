@@ -43,7 +43,7 @@ jobs:
 
         echo "::set-output name=release::${VERSION}"
 
-        VERSION="$(echo "${VERSION}" | awk -F. -v OFS=. ''{$NF++;print}'')-pre"
+        VERSION="$(echo "${VERSION}" | awk -F. -v OFS=. ''{$NF += 1 ; print}'')-pre"
 
         echo "::set-output name=bumped::${VERSION}"
 
