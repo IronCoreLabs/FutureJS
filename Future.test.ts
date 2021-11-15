@@ -883,4 +883,31 @@ describe("Future", () => {
             );
         });
     });
+
+    describe("then-able", () => {
+        test("works with await syntax.", async () => {
+            const f = Future.of(1);
+            const result = await f;
+            expect(result).toEqual(1);
+        });
+
+        test("blows up correctly with await syntax.", async () => {
+            const f = Future.reject(new Error("bad stuff"));
+
+            await expect(f).rejects.toThrow("bad stuff");
+        });
+
+        test("can be chained with normal promises.", async () => {
+            const p = Promise.resolve(1);
+            const result = await p.then((num) => Future.of(num + 1));
+            expect(result).toEqual(2);
+        });
+
+        test("blows up correctly when chained with normal promises.", async () => {
+            const p = Promise.resolve(1);
+            const chainedPromiseFuture = p.then(() => Future.reject(new Error("bad stuff")));
+
+            await expect(chainedPromiseFuture).rejects.toThrow("bad stuff");
+        });
+    });
 });

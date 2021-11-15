@@ -17,13 +17,29 @@ export default class Future<L, R> {
         try {
             //In the case where the action call just completely blows up, prevent against that and invoke reject.
             this.action(reject, resolve);
-        } catch (error) {
+        } catch (error: any) {
             reject(error);
         }
     }
 
     /**
-     * Similar to engage. Starts execution of the Future and returns the resolve/reject wrapped up in a Promise instead of taking reject/resolve parameters
+     * Presents a Thenable interface to the Future, which immediatly starts execution of the Future. This allows for
+     * await syntax to be used on Futures, as well as chaining with other Thenable objects (e.g. Promises).
+     * @param {Function} resolve Callback if Future fully executed successfully.
+     * @param {Function} reject Callback if error occured during Future execution.
+     * @returns {Promise<TResult1 | TResult2>} Promise that will resolve when the immediately executed Future is
+     *                                         resolved, with resolve/reject applied to the result.
+     */
+    then<TResult1, TResult2>(
+        resolve: (r: R) => TResult1 | PromiseLike<TResult1>,
+        reject: (l: any) => TResult2 | PromiseLike<TResult2>
+    ): Promise<TResult1 | TResult2> {
+        return this.toPromise().then(resolve, reject);
+    }
+
+    /**
+     * Similar to engage. Starts execution of the Future and returns the resolve/reject wrapped up in a Promise instead
+     * of taking reject/resolve parameters.
      * @return {Promise<R>} Start execution of the Future but return a Promise which will be resolved/reject when the Future is
      */
     toPromise(): Promise<R> {
@@ -80,7 +96,7 @@ export default class Future<L, R> {
             let result: RS;
             try {
                 result = fn();
-            } catch (e) {
+            } catch (e: any) {
                 return reject(e);
             }
             resolve(result);
@@ -97,7 +113,7 @@ export default class Future<L, R> {
             let promiseResult: Promise<RS> | PromiseLike<RS>;
             try {
                 promiseResult = fn();
-            } catch (e) {
+            } catch (e: any) {
                 return reject(e);
             }
             //We have to support both Promise and PromiseLike methods as input here, but treat them all as normal Promises when executing them
@@ -134,7 +150,7 @@ export default class Future<L, R> {
             let result: RS;
             try {
                 result = fn(a);
-            } catch (e) {
+            } catch (e: any) {
                 return reject(e);
             }
             resolve(result);
