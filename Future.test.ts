@@ -217,6 +217,36 @@ describe("Future", () => {
                     }
                 );
         });
+
+        test("does not get run if engages above this scope throw", (done) => {
+            let mapCalledTimes = 0;
+            let handleWithCalledTimes = 0;
+            const action = Future.of(33)
+                .handleWith((e) => {
+                    console.log(`failed an infallible future: ${e}`);
+                    handleWithCalledTimes++;
+                    return Future.of(-1);
+                })
+                .map((r) => {
+                    mapCalledTimes++;
+                    return r;
+                });
+
+            try {
+                action.engage(
+                    (e) => {
+                        throw e;
+                    },
+                    (r) => {
+                        throw new Error(`oh no, something went wrong after the future has run to completion on ${r}`);
+                    }
+                );
+            } catch (e) {
+                expect(handleWithCalledTimes).toBe(0);
+                expect(mapCalledTimes).toBe(1);
+                done();
+            }
+        });
     });
 
     describe("errorMap", () => {
