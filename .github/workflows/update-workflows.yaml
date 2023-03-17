@@ -14,9 +14,11 @@ name: Update Workflows
   workflow_dispatch: null
 jobs:
   update:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.x
     - name: Install JSON tools
       run: pip3 install jsonpatch pyyaml
     - name: Build yaml2json, json2yaml
@@ -56,38 +58,49 @@ jobs:
 
         '
     - name: Check out this repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: thisrepo
         token: ${{ secrets.WORKFLOW_PAT }}
     - name: Check out template repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: depot
         repository: IronCoreLabs/depot
         token: ${{ secrets.WORKFLOW_PAT }}
+    - name: Randomize
+      run: "# Only create the patch file if it doesn't already exist. We don't want\
+        \ to change the time every time we run this.\nif ! [ -f thisrepo/.github/update-workflows-patch.yaml\
+        \ ] ; then\n  (\n    echo \"- op: replace\"\n    echo \"  path: /on/schedule/0/cron\"\
+        \n    echo \"  value: \\\"$(( $RANDOM % 60 )) 7 * * 1\\\"\"\n  ) > thisrepo/.github/update-workflows-patch.yaml\n\
+        \  # \"git add\" and commit will be taken care of below.\nfi\nif [ -f thisrepo/.github/workflows/rebuild.yaml\
+        \ ] && ! [ -f thisrepo/.github/rebuild-patch.yaml ] ; then\n  (\n    echo\
+        \ \"- op: replace\"\n    echo \"  path: /on/schedule/0/cron\"\n    echo \"\
+        \  value: \\\"$(( $RANDOM % 60 )) 16 * * 2\\\"\"\n  ) > thisrepo/.github/rebuild-patch.yaml\n\
+        fi\n"
     - name: Update workflows
       id: update
       working-directory: thisrepo
       run: "set -x\nset -o pipefail\n\n# If it fails, we still want to create a PR;\
         \ it helps signal a human to come fix it.\nif ! bash -x .github/update-workflows.sh\
-        \ ; then\n  echo \"::set-output name=failed::true\"\n  exit\nelse\n  echo\
-        \ \"::set-output name=failed::false\"\nfi\n\necho \"Git status:\"\ngit status\n\
-        \ngit add -A\n\nif [ -z \"$(git status --porcelain)\" ] ; then\n  echo \"\
-        No updated workflows; done.\"\n  echo \"::set-output name=skip::true\"\nfi\n"
-    - name: Commit and PR
+        \ ; then\n  echo \"failed=true\" >> \"$GITHUB_OUTPUT\"\nelse\n  echo \"failed=false\"\
+        \ >> \"$GITHUB_OUTPUT\"\nfi\n\necho \"Git status:\"\ngit status\n\ngit add\
+        \ -A\n\nif [ -z \"$(git status --porcelain)\" ] ; then\n  echo \"No updated\
+        \ workflows; done.\"\n  echo \"skip=true\" >> \"$GITHUB_OUTPUT\"\nfi\n"
+    - name: Commit and push or PR
       working-directory: thisrepo
       if: steps.update.outputs.skip != 'true'
       run: "set -x\nset -o pipefail\ngit config --global user.email ops@ironcorelabs.com\n\
-        git config --global user.name \"Leeroy Travis\"\n\n# If we're on a PR branch,\
-        \ push to it instead of making a new PR branch.\nif ! [ \"${{ github.ref }}\"\
-        \ = \"refs/heads/main\" ] ; then\n  git commit -m \"Update workflows from\
-        \ templates.\"\n  git push\n  exit 0\nfi\n\nNEW_BRANCH=\"workflow-update-$(date\
-        \ -u '+%Y-%m-%d')\"\ngit checkout -b \"${NEW_BRANCH}\"\ngit commit -m \"Update\
-        \ workflows from templates.\"\ngit push -u origin \"${NEW_BRANCH}\"\n\n# Create\
-        \ a PR.\nPRBODY=\"Updating from templates.\"\nif [ \"${{ steps.update.outputs.failed\
-        \ }}\" == \"true\" ] ; then\n  PRBODY=$(printf \"%s\\n\\n%s\" \"${PRBODY}\"\
-        \ \"@IronCoreLabs/ops patch didn't apply cleanly.\")\nfi\n# https://github.com/IronCoreLabs/depot/issues/333\n\
+        git config --global user.name \"Leeroy Travis\"\n\ngit commit -m \"Update\
+        \ workflows from templates.\"\n\n# If the update applied cleanly, try pushing\
+        \ straight to the branch we're on.\nif [ \"${{ steps.update.outputs.failed\
+        \ }}\" = \"false\" ] && git push ; then\n  exit 0\nfi\n\n# Simple push failed.\
+        \ We don't care why it failed; we just need to make a PR out of this commit.\n\
+        NEW_BRANCH=\"workflow-update-$(date -u '+%Y-%m-%d')\"\ngit branch \"${NEW_BRANCH}\"\
+        \ngit push -u origin \"${NEW_BRANCH}\"\n\n# Create a PR.\nPRBODY=\"Updating\
+        \ from templates.\"\nif [ \"${{ steps.update.outputs.failed }}\" == \"true\"\
+        \ ] ; then\n  PRBODY=$(printf \"%s\\n\\n%s\" \"${PRBODY}\" \"@IronCoreLabs/ops\
+        \ patch didn't apply cleanly.\")\nfi\n# https://github.com/IronCoreLabs/depot/issues/333\n\
         echo \"${PRBODY}\" > body.txt\necho -n \"${NEW_BRANCH}\" > head.txt\necho\
         \ ${{ steps.update.outputs.failed }} | \\\njq --rawfile body body.txt --rawfile\
         \ head head.txt \\\n  '{\"title\": \"Update workflows from templates\",\n\
