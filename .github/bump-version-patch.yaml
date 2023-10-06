@@ -1,3 +1,0 @@
-# Don't automatically bump the version. Wait for a human to trigger the workflow using the GitHub UI.
-- op: remove
-  path: /on/push
