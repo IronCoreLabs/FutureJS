@@ -7,5 +7,5 @@ name: Typescript CI
   workflow_dispatch: null
 jobs:
   typescript-ci:
-    uses: IronCoreLabs/workflows/.github/workflows/typescript-ci.yaml@d4071836fb9a7ec669d1dc5a13ce3fff6c82c5ec
+    uses: IronCoreLabs/workflows/.github/workflows/typescript-ci.yaml@test-typescript-ci-change
     secrets: inherit
