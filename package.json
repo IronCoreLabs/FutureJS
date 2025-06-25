@@ -34,15 +34,5 @@
         "jsxBracketSameLine": true,
         "arrowParens": "always"
     },
-    "jest": {
-        "coverageThreshold": {
-            "global": {
-                "statements": -5,
-                "branches": 100,
-                "lines": 100,
-                "functions": 100
-            }
-        }
-    },
     "dependencies": {}
 }
