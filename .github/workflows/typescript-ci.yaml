@@ -1,5 +1,5 @@
 name: Typescript CI
-'on':
+on:
   push:
     branches:
     - main
@@ -9,3 +9,5 @@ jobs:
   typescript-ci:
     uses: IronCoreLabs/workflows/.github/workflows/typescript-ci.yaml@typescript-ci-v0
     secrets: inherit
+    with:
+        test_matrix_node_version: '["20"]'
