@@ -80,7 +80,7 @@ export default class Future<L, R> {
         return new Future<L, RepairedType>((reject: Reject<L>, resolve: Resolve<RepairedType>) => {
             this.engage((error) => {
                 errHandler(error).engageAndCatch(reject, resolve, false);
-            }, resolve as Resolve<R>);
+            }, resolve as Resolve<R>); //Type cast this as the resolved method should be able to handle both R and RepairedType
         });
     }
 
