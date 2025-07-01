@@ -18,6 +18,7 @@ export default class Future<L, R> {
             //In the case where the action call just completely blows up, prevent against that and invoke reject.
             this.action(reject, resolve);
         } catch (error: any) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
             reject(error);
         }
     }
@@ -97,6 +98,7 @@ export default class Future<L, R> {
             try {
                 result = fn();
             } catch (e: any) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 return reject(e);
             }
             resolve(result);
@@ -114,6 +116,7 @@ export default class Future<L, R> {
             try {
                 promiseResult = fn();
             } catch (e: any) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 return reject(e);
             }
             //We have to support both Promise and PromiseLike methods as input here, but treat them all as normal Promises when executing them
@@ -151,6 +154,7 @@ export default class Future<L, R> {
             try {
                 result = fn(a);
             } catch (e: any) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 return reject(e);
             }
             resolve(result);
