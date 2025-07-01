@@ -14,12 +14,18 @@ export default class Future<L, R> {
      * @param {Function} resolve Handler if Future fully executed successfully
      */
     engage(reject: Reject<L>, resolve: Resolve<R>): void {
-        try {
-            //In the case where the action call just completely blows up, prevent against that and invoke reject.
-            this.action(reject, resolve);
-        } catch (error: any) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            reject(error);
+        this.action(reject, resolve);
+    }
+
+    private engageAndCatch(reject: Reject<L>, resolve: Resolve<R>, safe = true): void {
+        if (safe) {
+            try {
+                this.engage(reject, resolve);
+            } catch (e) {
+                reject(e as L);
+            }
+        } else {
+            this.engage(reject, resolve);
         }
     }
 
@@ -44,7 +50,7 @@ export default class Future<L, R> {
      * @return {Promise<R>} Start execution of the Future but return a Promise which will be resolved/reject when the Future is
      */
     toPromise(): Promise<R> {
-        return new Promise<R>((resolve: Resolve<R>, reject: Reject<L>) => this.engage(reject, resolve));
+        return new Promise<R>((resolve: Resolve<R>, reject: Reject<L>) => this.engageAndCatch(reject, resolve));
     }
 
     /**
@@ -61,7 +67,7 @@ export default class Future<L, R> {
      */
     flatMap<NewResultType>(next: (data: R) => Future<L, NewResultType>): Future<L, NewResultType> {
         return new Future<L, NewResultType>((reject: Reject<L>, resolve: Resolve<NewResultType>) => {
-            this.engage(reject, (data: R) => next(data).engage(reject, resolve));
+            this.engageAndCatch(reject, (data: R) => next(data).engageAndCatch(reject, resolve));
         });
     }
 
@@ -73,8 +79,8 @@ export default class Future<L, R> {
     handleWith<RepairedType extends R>(errHandler: (e: L) => Future<L, RepairedType>): Future<L, RepairedType> {
         return new Future<L, RepairedType>((reject: Reject<L>, resolve: Resolve<RepairedType>) => {
             this.engage((error) => {
-                errHandler(error).engage(reject, resolve);
-            }, resolve as Resolve<R>); //Type cast this as the resolved method should be able to handle both R and RepairedType
+                errHandler(error).engageAndCatch(reject, resolve, false);
+            }, resolve as Resolve<R>);
         });
     }
 
@@ -84,7 +90,7 @@ export default class Future<L, R> {
      */
     errorMap<LB>(mapper: (error: L) => LB): Future<LB, R> {
         return new Future<LB, R>((reject: Reject<LB>, resolve: Resolve<R>) => {
-            this.engage((error) => reject(mapper(error)), resolve);
+            this.engageAndCatch((error) => reject(mapper(error)), resolve);
         });
     }
 
@@ -173,7 +179,7 @@ export default class Future<L, R> {
             let count = 0;
             let done = false;
 
-            future1.engage(
+            future1.engageAndCatch(
                 (error) => {
                     if (!done) {
                         done = true;
@@ -188,7 +194,7 @@ export default class Future<L, R> {
                 }
             );
 
-            future2.engage(
+            future2.engageAndCatch(
                 (error) => {
                     if (!done) {
                         done = true;
@@ -253,7 +259,7 @@ export default class Future<L, R> {
             }
 
             futures.forEach((futureInstance, index) => {
-                futureInstance.engage(
+                futureInstance.engageAndCatch(
                     (error) => {
                         reject(error);
                     },
