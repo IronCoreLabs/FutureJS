@@ -14,11 +14,14 @@ export default class Future<L, R> {
      * @param {Function} resolve Handler if Future fully executed successfully
      */
     engage(reject: Reject<L>, resolve: Resolve<R>): void {
+        this.action(reject, resolve);
+    }
+
+    private engageAndCatch(reject: Reject<L>, resolve: Resolve<R>): void {
         try {
-            //In the case where the action call just completely blows up, prevent against that and invoke reject.
-            this.action(reject, resolve);
-        } catch (error: any) {
-            reject(error);
+            this.engage(reject, resolve);
+        } catch (e) {
+            reject(e as L);
         }
     }
 
@@ -60,7 +63,7 @@ export default class Future<L, R> {
      */
     flatMap<NewResultType>(next: (data: R) => Future<L, NewResultType>): Future<L, NewResultType> {
         return new Future<L, NewResultType>((reject: Reject<L>, resolve: Resolve<NewResultType>) => {
-            this.engage(reject, (data: R) => next(data).engage(reject, resolve));
+            this.engageAndCatch(reject, (data: R) => next(data).engageAndCatch(reject, resolve));
         });
     }
 
@@ -83,7 +86,7 @@ export default class Future<L, R> {
      */
     errorMap<LB>(mapper: (error: L) => LB): Future<LB, R> {
         return new Future<LB, R>((reject: Reject<LB>, resolve: Resolve<R>) => {
-            this.engage((error) => reject(mapper(error)), resolve);
+            this.engageAndCatch((error) => reject(mapper(error)), resolve);
         });
     }
 
@@ -97,6 +100,7 @@ export default class Future<L, R> {
             try {
                 result = fn();
             } catch (e: any) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 return reject(e);
             }
             resolve(result);
@@ -114,6 +118,7 @@ export default class Future<L, R> {
             try {
                 promiseResult = fn();
             } catch (e: any) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 return reject(e);
             }
             //We have to support both Promise and PromiseLike methods as input here, but treat them all as normal Promises when executing them
@@ -151,6 +156,7 @@ export default class Future<L, R> {
             try {
                 result = fn(a);
             } catch (e: any) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
                 return reject(e);
             }
             resolve(result);
@@ -169,7 +175,7 @@ export default class Future<L, R> {
             let count = 0;
             let done = false;
 
-            future1.engage(
+            future1.engageAndCatch(
                 (error) => {
                     if (!done) {
                         done = true;
@@ -184,7 +190,7 @@ export default class Future<L, R> {
                 }
             );
 
-            future2.engage(
+            future2.engageAndCatch(
                 (error) => {
                     if (!done) {
                         done = true;
@@ -249,7 +255,7 @@ export default class Future<L, R> {
             }
 
             futures.forEach((futureInstance, index) => {
-                futureInstance.engage(
+                futureInstance.engageAndCatch(
                     (error) => {
                         reject(error);
                     },

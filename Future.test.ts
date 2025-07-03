@@ -16,14 +16,17 @@ describe("Future", () => {
             expect(resolveSpy).not.toHaveBeenCalled();
         });
 
-        test("invokes reject when action throws exception", () => {
-            const actionSpy = jasmine.createSpy("futureAction").and.throwError("forced error");
+        test("does not invoke reject when action throws exception", () => {
+            const actionSpy = jasmine.createSpy("futureAction").and.callFake(() => {
+                throw new Error("forced error");
+            });
             const rejectSpy = jasmine.createSpy("rejectSpy");
             const resolveSpy = jasmine.createSpy("resolveSpy");
-            new Future(actionSpy).engage(rejectSpy, resolveSpy);
-
+            expect(() => {
+                new Future(actionSpy).engage(rejectSpy, resolveSpy);
+            }).toThrowError("forced error");
             expect(actionSpy).toHaveBeenCalledWith(rejectSpy, resolveSpy);
-            expect(rejectSpy).toHaveBeenCalledWith(new Error("forced error"));
+            expect(rejectSpy).not.toHaveBeenCalled();
             expect(resolveSpy).not.toHaveBeenCalled();
         });
 
@@ -36,6 +39,69 @@ describe("Future", () => {
             new Future(action).engage(rejectSpy, resolveSpy);
 
             expect(resolveSpy).toHaveBeenCalledWith("my value");
+        });
+        test("handleWith for current Future does not get run if errors above its scope throw", (done) => {
+            let mapCalledTimes = 0;
+            let handleWithCalledTimes = 0;
+            const action = Future.of(33)
+                .handleWith((e: Error) => {
+                    // eslint-disable-next-line no-console
+                    console.log(`failed an infallible future: ${e.message}`);
+                    handleWithCalledTimes++;
+                    return Future.of(-1);
+                })
+                .map((r) => {
+                    mapCalledTimes++;
+                    return r;
+                });
+
+            try {
+                action.engage(
+                    (e) => {
+                        throw e;
+                    },
+                    (r) => {
+                        throw new Error(`oh no, something went wrong after the future has run to completion on ${r}`);
+                    }
+                );
+            } catch (e) {
+                expect(handleWithCalledTimes).toBe(0);
+                expect(mapCalledTimes).toBe(1);
+                done();
+            }
+        });
+
+        test("does not get run if engages above this scope throw in the rejection", (done) => {
+            let mapCalledTimes = 0;
+            let handleWithCalledTimes = 0;
+            const expectedError = new Error("error message");
+            let errorInHandleWith = null;
+            const action: Future<Error, number> = Future.reject(expectedError)
+                .handleWith((e): any => {
+                    handleWithCalledTimes++;
+                    errorInHandleWith = e;
+                    return Future.of(-1);
+                })
+                .map((r) => {
+                    mapCalledTimes++;
+                    return r;
+                });
+
+            try {
+                action.engage(
+                    (e) => {
+                        throw e;
+                    },
+                    (r) => {
+                        throw new Error(`oh no, something went wrong after the future has run to completion on ${r}`);
+                    }
+                );
+            } catch (e) {
+                expect(handleWithCalledTimes).toBe(1);
+                expect(errorInHandleWith).toBe(expectedError);
+                expect(mapCalledTimes).toBe(1);
+                done();
+            }
         });
     });
 
@@ -906,6 +972,17 @@ describe("Future", () => {
         test("blows up correctly when chained with normal promises.", async () => {
             const p = Promise.resolve(1);
             const chainedPromiseFuture = p.then(() => Future.reject(new Error("bad stuff")));
+
+            await expect(chainedPromiseFuture).rejects.toThrow("bad stuff");
+        });
+
+        test("catches exceptions if thrown in the map of the future", async () => {
+            const p = Promise.resolve(1);
+            const chainedPromiseFuture = p.then(() =>
+                Future.of(1).map(() => {
+                    throw new Error("bad stuff");
+                })
+            );
 
             await expect(chainedPromiseFuture).rejects.toThrow("bad stuff");
         });
