@@ -17,15 +17,11 @@ export default class Future<L, R> {
         this.action(reject, resolve);
     }
 
-    private engageAndCatch(reject: Reject<L>, resolve: Resolve<R>, safe = true): void {
-        if (safe) {
-            try {
-                this.engage(reject, resolve);
-            } catch (e) {
-                reject(e as L);
-            }
-        } else {
+    private engageAndCatch(reject: Reject<L>, resolve: Resolve<R>): void {
+        try {
             this.engage(reject, resolve);
+        } catch (e) {
+            reject(e as L);
         }
     }
 
@@ -50,7 +46,7 @@ export default class Future<L, R> {
      * @return {Promise<R>} Start execution of the Future but return a Promise which will be resolved/reject when the Future is
      */
     toPromise(): Promise<R> {
-        return new Promise<R>((resolve: Resolve<R>, reject: Reject<L>) => this.engageAndCatch(reject, resolve));
+        return new Promise<R>((resolve: Resolve<R>, reject: Reject<L>) => this.engage(reject, resolve));
     }
 
     /**
@@ -79,7 +75,7 @@ export default class Future<L, R> {
     handleWith<RepairedType extends R>(errHandler: (e: L) => Future<L, RepairedType>): Future<L, RepairedType> {
         return new Future<L, RepairedType>((reject: Reject<L>, resolve: Resolve<RepairedType>) => {
             this.engage((error) => {
-                errHandler(error).engageAndCatch(reject, resolve, false);
+                errHandler(error).engage(reject, resolve);
             }, resolve as Resolve<R>); //Type cast this as the resolved method should be able to handle both R and RepairedType
         });
     }

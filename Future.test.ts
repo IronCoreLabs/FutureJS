@@ -16,16 +16,19 @@ describe("Future", () => {
             expect(resolveSpy).not.toHaveBeenCalled();
         });
 
-        // test("invokes reject when action throws exception", () => {
-        //     const actionSpy = jasmine.createSpy("futureAction").and.throwError("forced error");
-        //     const rejectSpy = jasmine.createSpy("rejectSpy");
-        //     const resolveSpy = jasmine.createSpy("resolveSpy");
-        //     new Future(actionSpy).engage(rejectSpy, resolveSpy);
-
-        //     expect(actionSpy).toHaveBeenCalledWith(rejectSpy, resolveSpy);
-        //     expect(rejectSpy).toHaveBeenCalledWith(new Error("forced error"));
-        //     expect(resolveSpy).not.toHaveBeenCalled();
-        // });
+        test("does not invoke reject when action throws exception", () => {
+            const actionSpy = jasmine.createSpy("futureAction").and.callFake(() => {
+                throw new Error("forced error");
+            });
+            const rejectSpy = jasmine.createSpy("rejectSpy");
+            const resolveSpy = jasmine.createSpy("resolveSpy");
+            expect(() => {
+                new Future(actionSpy).engage(rejectSpy, resolveSpy);
+            }).toThrowError("forced error");
+            expect(actionSpy).toHaveBeenCalledWith(rejectSpy, resolveSpy);
+            expect(rejectSpy).not.toHaveBeenCalled();
+            expect(resolveSpy).not.toHaveBeenCalled();
+        });
 
         test("resolves with expected value on success", () => {
             const action = (_reject: (e: Error) => void, resolve: (val: string) => void) => {
@@ -37,7 +40,7 @@ describe("Future", () => {
 
             expect(resolveSpy).toHaveBeenCalledWith("my value");
         });
-        test("does not get run if engages above this scope throw", (done) => {
+        test("handleWith for current Future does not get run if errors above its scope throw", (done) => {
             let mapCalledTimes = 0;
             let handleWithCalledTimes = 0;
             const action = Future.of(33)
@@ -71,16 +74,15 @@ describe("Future", () => {
         test("does not get run if engages above this scope throw in the rejection", (done) => {
             let mapCalledTimes = 0;
             let handleWithCalledTimes = 0;
-            const action: Future<Error, number> = Future.reject(new Error("error message"))
+            const expectedError = new Error("error message");
+            let errorInHandleWith = null;
+            const action: Future<Error, number> = Future.reject(expectedError)
                 .handleWith((e): any => {
-                    // eslint-disable-next-line no-console
-                    console.log(`failed a future: ${e.message}`);
                     handleWithCalledTimes++;
+                    errorInHandleWith = e;
                     return Future.of(-1);
                 })
                 .map((r) => {
-                    // eslint-disable-next-line no-console
-                    console.log(`mapped`);
                     mapCalledTimes++;
                     return r;
                 });
@@ -96,6 +98,7 @@ describe("Future", () => {
                 );
             } catch (e) {
                 expect(handleWithCalledTimes).toBe(1);
+                expect(errorInHandleWith).toBe(expectedError);
                 expect(mapCalledTimes).toBe(1);
                 done();
             }
@@ -969,6 +972,17 @@ describe("Future", () => {
         test("blows up correctly when chained with normal promises.", async () => {
             const p = Promise.resolve(1);
             const chainedPromiseFuture = p.then(() => Future.reject(new Error("bad stuff")));
+
+            await expect(chainedPromiseFuture).rejects.toThrow("bad stuff");
+        });
+
+        test("catches exceptions if thrown in the map of the future", async () => {
+            const p = Promise.resolve(1);
+            const chainedPromiseFuture = p.then(() =>
+                Future.of(1).map(() => {
+                    throw new Error("bad stuff");
+                })
+            );
 
             await expect(chainedPromiseFuture).rejects.toThrow("bad stuff");
         });
