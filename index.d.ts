@@ -1,6 +1,6 @@
-export declare type Resolve<R> = (result: R) => void;
-export declare type Reject<L> = (e: L) => void;
-export declare type RejectResolveAction<L, R> = (reject: Reject<L>, resolve: Resolve<R>) => void;
+export type Resolve<R> = (result: R) => void;
+export type Reject<L> = (e: L) => void;
+export type RejectResolveAction<L, R> = (reject: Reject<L>, resolve: Resolve<R>) => void;
 export default class Future<L, R> {
     action: RejectResolveAction<L, R>;
     constructor(action: RejectResolveAction<L, R>);
