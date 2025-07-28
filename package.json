@@ -1,6 +1,6 @@
 {
     "name": "futurejs",
-    "version": "2.2.1-pre",
+    "version": "2.2.2-pre",
     "description": "Promise-alternative library for doing asynchronous operations",
     "repository": "https://github.com/IronCoreLabs/futurejs",
     "author": "IronCore Labs",
@@ -15,8 +15,8 @@
     },
     "devDependencies": {
         "@types/jest": "^26.0.22",
-        "@typescript-eslint/eslint-plugin": "^4.21.0",
-        "@typescript-eslint/parser": "^4.21.0",
+        "@typescript-eslint/eslint-plugin": "^5.59.11",
+        "@typescript-eslint/parser": "^5.59.11",
         "eslint": "^7.23.0",
         "eslint-plugin-import": "^2.22.1",
         "eslint-plugin-jsdoc": "^32.3.0",
