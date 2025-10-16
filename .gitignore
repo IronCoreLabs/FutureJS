@@ -2,4 +2,4 @@ coverage
 node_modules
 yarn-error.log
 Future.js
-.envrc
+.direnv
