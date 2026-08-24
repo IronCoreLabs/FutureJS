@@ -7,7 +7,7 @@ on:
   workflow_dispatch: null
 jobs:
   typescript-ci:
-    uses: IronCoreLabs/workflows/.github/workflows/typescript-ci.yaml@typescript-ci-v0
+    uses: IronCoreLabs/workflows/.github/workflows/typescript-ci.yaml@typescript-ci-v0.0.0
     secrets: inherit
     with:
         test_matrix_node_version: '["20"]'
